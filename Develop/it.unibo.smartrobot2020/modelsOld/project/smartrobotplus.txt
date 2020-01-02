@@ -1,0 +1,140 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak as the result of PROJECT PHASE.
+ * 
+ * ================================================================
+ */
+System smartrobot  
+
+Dispatch cmd  : cmd(X)
+ 
+Request  step      :  step(DURATION)
+Reply    stepdone  :  stepdone(V)
+Reply    stepfail  :  stepfail(DURATION)
+Dispatch stop      :  stop(V)  
+ 
+Event  obstacle    : obstacle( DISTANCE )
+Event  alarm       : alarm(V)
+ 
+Context ctxSmartRobot ip [ host= "localhost"     port= 8020 ] 
+Context ctxBasicRobot ip [ host= "192.168.1.6"   port= 8018 ] 
+
+ExternalQActor basicrobot context ctxBasicRobot   
+ 
+/*  
+ * ---------------------------------------------------------------------------
+ * smartrobot
+ * ---------------------------------------------------------------------------
+ */ 
+
+QActor smartrobot context ctxSmartRobot{
+[" 
+var StepTime = 1000L;  
+var Duration=0 
+"]  	
+	State s0 initial{
+		println("smartrobot start")
+		delay 1000
+		forward basicrobot -m cmd : cmd( a )
+		delay 1000
+		forward basicrobot -m cmd : cmd( d )
+		delay 1000
+		forward basicrobot -m cmd : cmd( h )
+	}
+	Goto work
+	
+	State work{
+		//println("smartrobot waiting ...")
+	}
+	Transition s0 
+			whenEvent alarm  -> handleAlarm
+			whenMsg cmd      -> handleCmd
+			whenRequest step -> doStep
+			whenMsg stop     -> handleStopNotExpected		 
+ 		    whenEvent obstacle -> ignoreObstacle 
+ 
+ /*
+ * Facing alarms
+ */	
+   State handleAlarm{
+ 		println("smartrobot | handle alarm ")   	
+ 		printCurrentMessage  
+   }
+   Goto work
+ 	
+ 	State handleStopNotExpected{
+ 		println("smartrobot | WARNING: the stop command should not be sent here")
+ 	}
+ 	Goto work
+ 	
+ 	State ignoreObstacle{
+ 		println("smartrobot | IGNORE obstacle event in normal work ")
+ 	}
+ 	Goto work
+ 
+ /*
+  * REQUIREMENT req-cmd
+  */
+	State handleCmd {
+		printCurrentMessage 
+		onMsg( cmd : cmd(X) ){
+ 			forward basicrobot -m cmd : cmd( $payloadArg(0) )
+		}
+	}
+	Goto work
+
+ /*
+  * ---------------------------------------------------------------------------
+  * REQUIREMENT req-step 
+  * ---------------------------------------------------------------------------
+  */
+	State doStep{ 
+ 		printCurrentMessage 
+		onMsg( step : step( T ) ){
+			["StepTime = payloadArg(0).toLong()"]
+			["startTimer()"]
+			forward basicrobot -m cmd : cmd( w )
+		}  
+	} 
+	Transition t0 
+		whenTimeVar StepTime  -> endStep	
+		whenMsg stop          -> stepStop		  
+		whenEvent obstacle    -> stepFail
+ 	
+	State endStep{  
+		forward basicrobot -m cmd : cmd( h ) 
+		println("smartrobot | step DONE")
+		replyTo step with stepdone : stepdone
+  	}
+	Goto work
+	 
+	State stepStop{ 
+		["Duration=getDuration()"]  //getDuration is built-in in the actor (with ref. to startTimer)
+		forward basicrobot -m cmd : cmd( h ) 
+		replyTo step with stepfail : stepfail($Duration)
+		println("smartrobot | stepStop Duration=$Duration ")
+ 	}
+	Goto work  	
+
+	State stepFail{ 
+		["Duration=getDuration()"]  //getDuration is built-in in the actor (with ref. to startTimer)
+		replyTo step with stepfail : stepfail($Duration)
+		println("smartrobot | stepFail Duration=$Duration ")
+		emit alarm : alarm( stepobstacle )  //towards the others ... 
+ 	}
+	Goto work  	
+
+ /*
+  * REQUIREMENT req-stop
+  */
+  	State doStop {
+  		printCurrentMessage  
+  		 
+  	}
+	Goto work
+	
+	
+}
+ 

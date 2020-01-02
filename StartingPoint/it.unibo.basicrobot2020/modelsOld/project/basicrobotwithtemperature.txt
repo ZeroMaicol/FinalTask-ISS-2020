@@ -1,0 +1,126 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak as the result of PROJECT PHASE.
+ * 
+ * ================================================================
+ */
+System  basicrobot 
+
+Dispatch cmd  : cmd(X)
+
+Event  obstacle       : obstacle( DISTANCE )
+Event  temperature    : temperature( VALUE )  
+Event  help           : help( REASON )	//REASON :  reduce_temperature | ...
+
+Event  tick           : tick(N)
+
+Context ctxBasicRobot ip [ host= "localhost"   port= 8018 ]
+
+CodedQActor virtualrobotqa context ctxBasicRobot className "itunibo.robotVirtual.virtualRobotQa"
+
+QActor basicrobot context ctxBasicRobot{
+[" var tooHot = false "]
+	State s0 initial{
+		println("basicrobot | start (together with virtualrobotqa in the same context ...)")
+	}
+	Goto work
+	
+	State work{
+		//println("basicrobot | waiting ...")
+	}
+	Transition t0 
+			whenMsg cmd           -> handleCmd
+			whenEvent obstacle    -> handleObstacle
+			whenEvent temperature -> handleTemperature
+   
+ /*
+  * REQUIREMENT req-cmd
+  */
+	State handleCmd {
+		//println("basicrobot | handleCmd ")
+		printCurrentMessage 
+		onMsg( cmd : cmd(X) ){
+ 			forward virtualrobotqa -m cmd : cmd( $payloadArg(0 ) )
+		}
+	}
+	Goto work
+	
+/*
+ * Introduced after problem analysis
+ */	
+	State handleObstacle{
+		forward virtualrobotqa -m cmd : cmd( h )
+		println("basicrobot | stops (for safety) since  obstacle ")
+	}
+	Goto work 
+	
+/*
+ * New requirements
+ */	
+	State handleTemperature{
+		onMsg( temperature : temperature(V) ){
+			[" tooHot = payloadArg(0).toInt() > 40 "]
+			if "tooHot" { //stop the robot and ask help
+				println("Temperature too hot !!! ")
+				forward virtualrobotqa -m cmd : cmd( h )
+				emit help : help( reduce_temperature )
+			}
+		}
+	}
+    Goto waitForHelp if "tooHot" else work  //Guarded transition
+	
+	State waitForHelp{
+		println("I hope that the temperature will diminish ... ")
+	}
+	Transition t0 
+ 		whenEvent temperature -> handleTemperature
+}  
+ 
+
+
+/*
+ * ---------------------------------------------------------------------------
+ * This actor is not part of the system.
+ * It is introduced to make testing easier.
+ * ---------------------------------------------------------------------------
+ */
+ 
+QActor robotcaller context ctxBasicRobot{
+["var Counter = 0"]	
+	State s0 initial{
+//		println("robotcaller start")
+//  		forward basicrobot -m cmd : cmd(w) 
+//  		delay 1000  
+// 		forward basicrobot -m cmd  : cmd(h)
+// 		delay 500
+// 		forward basicrobot -m cmd : cmd(a)
+//		delay 500
+// 		forward basicrobot -m cmd : cmd(d)
+// 		delay 500
+// 		forward basicrobot -m cmd : cmd(w) 	//should hit a boundary
+//  		delay 1000  
+//   		forward basicrobot -m cmd : cmd(s)
+//		delay 1400
+// 		forward basicrobot -m cmd : cmd(h)
+	}
+	//Goto eventEmit
+	
+	/*
+	 * Test that events emitted by any actor in the context of basicrobot
+	 * can be perceived by any actor working in the context 
+	 * of a caller of basicrobot
+	 */ 
+	State eventEmit{
+		delay 30000
+		["Counter++"]
+		println("robotcaller emits tick $Counter")
+		emit tick : tick($Counter)		  
+	}
+	Goto eventEmit	
+	//WARNING: this could saturate  the msgqueue, but the event IS NOT SENT to the emitter
+
+}
+
+ 

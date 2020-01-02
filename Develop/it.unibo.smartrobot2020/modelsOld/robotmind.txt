@@ -1,0 +1,208 @@
+System robotmind
+  
+mqttBroker "localhost" : 1883    //192.168.1.18  192.168.43.229 
+
+Dispatch cmd       : cmd(X)   //to move the basicrobot
+Dispatch robotcmd  : cmd(X)   //to move the basicrobot
+
+Request  step      :  step(DURATION)
+Reply    stepdone  :  stepdone(V)  
+Reply    stepfail  :  stepfail(DURATION, CAUSE)
+Dispatch stop      :  stop(V)   
+
+Dispatch modelChange  : modelChange( TARGET, VALUE )  //force a resource-model change
+Dispatch modelUpdate  : modelUpdate( TARGET, VALUE )  //sent by the mind TARGET=robot|sonar|roomMap
+Event  obstacle       : obstacle( DISTANCE )  
+Event  local_modelChanged   : modelChanged( TARGET, VALUE )
+
+Context ctxRobotMind  ip [ host="localhost"      port= 8035  ] +mqtt
+Context ctxBasicRobot ip [ host= "192.168.1.5"   port= 8018  ] +mqtt      
+
+ExternalQActor basicrobot context ctxBasicRobot   
+
+QActor resourcemodel context ctxRobotMind{
+["val StepTime = 350"]
+	State s0 initial {		
+		run kotlincode.resServer.init(myself)
+		run kotlincode.coapSupport.init("coap://localhost:5683")
+		delay 1000 
+		run kotlincode.resourceObserver.init("coap://localhost:5683","robot/pos") 
+	} 
+	Goto waitModelChange //useGY521
+ 	
+	State waitModelChange{ }
+	Transition t0 whenMsg modelChange -> changeModel
+	              whenMsg modelUpdate -> updateModel
+
+	State updateModel{  
+		printCurrentMessage
+		onMsg( modelUpdate : modelUpdate( robot,V ) ) {
+			run kotlincode.coapSupport.updateResource( myself, "robot/pos", payloadArg(1) )
+		}
+	} 
+    Goto  waitModelChange
+    
+	State changeModel{  
+		printCurrentMessage 
+		//ROBOT MOVE
+//		onMsg( modelChange : modelChange( robot,p ) ) { // V= w | ...
+// 			forward robotmind -m robotcmd : cmd( p )
+//		} 
+		onMsg( modelChange : modelChange( robot,M ) ) { // V= w | ...
+			//run kotlincode.coapSupport.updateResource( myself, "robot/pos", payloadArg(1) )
+			emit local_modelChanged : modelChanged( robot,$payloadArg(1) )  //for the robotmind
+		} 
+		//SONAR DATA  
+//		onMsg( modelChange : modelChange( sonarRobot,V ) ) { // V= w | ...
+//			run itunibo.robot.resourceModelSupport.updateSonarRobotModel( myself, payloadArg(1) )
+//		}
+	}  
+	Goto  waitModelChange
+}
+
+
+ /*
+ * ====================================================================
+ * onestepahead
+ * ====================================================================
+ */
+QActor onestepahead context ctxRobotMind {
+[" 
+var foundObstacle = false; 
+var StepTime = 0L; 
+var Duration=0 
+"]    
+	State s0 initial {	  
+		println("onestepahead STARTED")  
+		["foundObstacle = false "]
+	}Goto work 
+ 	
+ 	State work{
+ 		
+ 	}
+ 	Transition t0 whenRequest step  -> doStep
+ 	
+	State doStep{ 
+ 		printCurrentMessage  
+		onMsg( step : step( T ) ){
+			["StepTime = payloadArg(0).toLong() 
+			  println(\"smartrobot | doStep StepTime =$StepTime \")
+			  startTimer()"]	//REQUIREMENT req-step-time
+			forward basicrobot -m cmd : cmd( w )  //ATTEMPT TO MOVE ...
+		}  
+	}  
+	Transition t0 
+		whenTimeVar StepTime  -> endStep	
+		whenMsg stop          -> stepStop		  
+		whenEvent obstacle    -> stepFail
+ 	
+	State endStep{  //REQUIREMENT  req-step-info
+		forward basicrobot -m cmd : cmd( h ) 
+		//println("onestepahead | step DONE")
+		//run kotlincode.coapSupport.updateResource(myself, "robot/pos", "p")  //Step
+		replyTo step with stepdone : stepdone(ok)
+  	}
+	Goto work
+	 
+	State stepStop{ //REQUIREMENT req-stop, req-step-time, req-step-info
+		["Duration=getDuration()"]  //getDuration: built-in (with ref. to startTimer)
+		forward basicrobot -m cmd : cmd( h ) 
+		replyTo step with stepfail : stepfail($Duration, stopped)
+		//println("onestepahead | stepStop Duration=$Duration ")
+ 	}
+	Goto work  	 
+
+	State stepFail{ //REQUIREMENT req-step-time, req-step-info
+		["Duration=getDuration()"]  //getDuration(): built-in (with ref. to startTimer)
+		replyTo step with stepfail : stepfail($Duration, obstacle)
+		//println("onestepahead | stepFail Duration=$Duration ")
+   	}
+	Goto work 
+}    
+
+/*
+ * MIND: reacts to changes in the model
+ * implements robot move step, halt and rotation
+ */
+QActor robotmind context ctxRobotMind{   
+["
+var StepTime     = 1000L   
+var Duration     = 0 
+var Move         = \"h\"
+"] 
+	State s0 initial {	  
+		println("ROBOT MIND STARTED")	
+	}
+	Goto work
+	 
+	State work {		} 
+	Transition t0 
+		whenEvent local_modelChanged -> handleModelChanged
+
+
+ 	State handleModelChanged{ //action to actuate
+		printCurrentMessage
+  		onMsg ( local_modelChanged : modelChanged(robot,M) ){ 			
+ 			["
+				Move = payloadArg(1)
+ 				println( \"TODO $Move \" ) 
+			"]
+  		}
+	}
+	Goto doStep if "(payloadArg(1) == \"p\")" else doMove
+
+ 	State doStep{
+ 		request onestepahead -m step : step( 350 )
+ 	}
+ 	Transition t0 
+ 		whenReply stepdone -> stepDone
+ 		whenReply stepfail -> stepFailed
+ 	
+ 	State stepDone{
+ 		printCurrentMessage
+		run kotlincode.coapSupport.updateResource(myself, "robot/pos", "p")  //Step
+ 	}
+ 	Goto work
+ 	
+ 	State stepFailed{
+ 		printCurrentMessage
+ 	}
+ 	Goto work
+ 	
+ 	State doMove{
+ 		//printCurrentMessage 
+ 		println("$Move")
+ 		forward basicrobot -m cmd : cmd( Move ) 
+ 	}
+ 	Goto work
+
+}
+
+
+
+QActor walker context ctxSmartRobot{
+["var NumOfRotations = 0"]
+	State s0 initial{
+		println("walker ON") 
+	}
+	Transition t0 
+		whenEvent boundary -> walk
+		 
+	State walk{
+		delay 500
+		request smartrobot -m step : step(370)
+	}
+	Transition t0 
+		whenReply stepdone -> walk
+		whenReply stepfail -> rotate
+	
+	State rotate{
+		printCurrentMessage
+		["NumOfRotations++"]
+		forward smartrobot -m cmd : cmd(a)
+		delay 1000
+	}
+	Goto s0 if "(NumOfRotations==4)" else walk
+	
+ 
+}

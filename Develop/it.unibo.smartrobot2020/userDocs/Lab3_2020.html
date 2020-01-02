@@ -1,0 +1,610 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+
+a:hover {
+    background-color: #cccccc;
+}
+
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>Lab3_2020</title></head>
+    
+<body>
+<div id="top">
+<h1>Lab3_2020 | A smartrobot <font size="5"></font> </h1>
+</div>  
+
+<div class="body"> 
+
+ 
+<h2>Requirements</h2>
+
+In our previous <kc>SPRINT</kc> related to the problem of
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.basicrobot2020/userDocs/Lab2_2020.html" target="web">
+Lab2_2020.html</a>, we introduce the idea of delegating to a  <em>smartrobot</em>  the responsibility of the requirements <ks>req-step</ks> and <ks>req-stop</ks>.
+The envisaged architecture was introduced by the following informal picture:
+<hr/>
+<center><img src="./img/basicrobot2020.png" alt="basicrobot2020" width="60%" height="60%"></center>
+
+<m>
+The <em>basicrobot</em> simply implements the <ks>req-cmd</ks> of 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.basicrobot2020/userDocs/Lab2_2020.html" target="web">
+Lab2_2020.html</a>, by leaving to the <em>smartrobot</em> the task to implement the  requirements <ks>req-step</ks>/<ks>req-stop</ks>.
+</m>
+
+<hr/>
+
+Thus, as a result of our first <tt>SPRINT-review meeting</tt>, the working team could introduce the following requirements for the <kc>next SPRINT</kc>:
+<div class="req">
+<m>
+Design and build a new 'resource/service' <em>smartrobot</em> that, with reference to our <em>basicrobot</em> of
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.basicrobot2020/userDocs/Lab2_2020.html" target="web">
+Lab2_2020.html</a>, is able to receive via Internet textual commands, so that:
+<ul>
+<li> requirement <ks>req-cmd</ks>: the <i>basic-commands</i> (<k>w | s | h | a | d</k>) are simply redirected to the <em>basicrobot</em>. </li>
+<li> requirement <ks>req-step</ks>: the command <k>step</k> moves forward the <em>basicrobot</em> for a given  <kc>step-time</kc>, specified in the <k>step</k> command .</li>
+<li> requirement <ks>req-stop</ks>: the command <k>stop</k> stops  'immediately' the <em>smartrobot</em> even it is still executing the command <k>step</k>.</li>
+</ul>
+
+Since the command <k>step</k> can be 'interrupted' by a <k>stop</k> or by the presence of an <kc>obstacle</kc>, 
+it might  terminate in two different modes: 
+<ul>
+<li>with <kc>success</kc>, if the robot stops after the given <kc>step-time</kc>;</li>
+<li>with <kc>failure</kc>, if the robot stops after an <kc>elapsed-time</kc> less then <kc>step-time</kc>.</li>
+</ul>
+
+Therefore, we add also the following requirements:
+
+<ul>
+<!--
+<li>  requirement <ks>req-step-result</ks>: the <em>smartrobot</em> provides information about the result (<kc>success</kc> or <kc>failure</kc>) of the command <k>step</k>;</li>
+-->
+<li>  requirement <ks>req-step-time</ks>: when the command <k>step</k> ends with a <kc>failure</kc>, the <em>smartrobot</em> provides
+information about the <kc>elapsed-time</kc>;</li>
+<li>  requirement <ks>req-step-info</ks>: if the command <k>step</k>  is sent to the <em>smartrobot</em> by a caller <ks>C</ks>, 
+<ks>C</ks> must be able to known the result of its command and, in the case of <kc>failure</kc> the value of the <kc>elapsed-time</kc>. </li>
+</li>
+</ul>
+</m> 
+</div>	    
+
+ 
+ 
+<h2>Requirement analysis</h2>
+Our requirement analysis can be formally expressed by the following qak-model:
+
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+<m><h3>Messages and actors</h3>  </m>
+<pre>
+System smartrobot  
+
+Dispatch cmd       :  cmd(X)
+Dispatch  step     :  step(DURATION)
+Dispatch stop      :  stop(V)  
+Event  obstacle    :  obstacle( DISTANCE )
+ 
+Context ctxSmartRobot ip [ host= "localhost"     port= 8020 ] 
+Context <ks>ctxBasicRobot</ks> ip [ host= "192.168.1.6"   port= 8018 ] 
+
+<k>ExternalQActor</k> basicrobot context <ks>ctxBasicRobot</ks>   
+</pre>
+</td>
+<td style="width:50%">
+<m>
+<ol>
+<li>The system is composed of the <em>smartrobot</em> that uses the <em>basicrobot</em> 'service' as an <kc>ExternalQActor</kc>. <br/> <br/></li>
+<li>All the commands are at the moment modeled as <i>dispatches</i>.<br/> <br/></li>
+<li>The event <k>obstacle</k> is emitted by the <em>basicrobot</em> when it hits an obstacle.<br/> <br/></li>
+</ol>
+</m>
+</td>
+</tr>
+
+<tr>
+<td style="width:50%">
+<m><h3>Startup of the <em>smartrobot</em></h3>  </m>
+<pre>
+QActor smartrobot context ctxSmartRobot{
+[" 
+<ks>var StepTime = 1000L;</ks>  <kc>//to be set by the step command</kc>
+<ks>var Duration=0 </ks> <kc>//to be set after the step command</kc>
+"]  	
+	State s0 initial{ println("smartrobot start") }
+	Goto work
+	
+	State work{	}
+	Transition s0 
+			whenMsg cmd      -> handleCmd
+ 			whenMsg step     -> doStep
+ 			whenMsg stop     -> handleStopNotExpected	     	
+ 	State handleStopNotExpected{
+ 		println("smartrobot | WARNING: stop command should not be sent here")
+ 	}
+ 	Goto work
+</pre>
+</td>
+<td style="width:50%">
+<m>
+The <em>smartrobot</em> waits for a command. <br/>
+It takes care also of <k>stop</k> commands sent by error.
+<ol>
+</ol>
+</m>
+</td>
+</tr>
+
+
+<tr>
+<td style="width:50%">
+<m><h3>REQUIREMENT: <ks>req-cmd</ks></h3>  </m>
+
+<pre>
+	State handleCmd {
+		printCurrentMessage 
+		onMsg( cmd : cmd(X) ){ forward basicrobot -m cmd : cmd( $payloadArg(0) ) }
+	}
+	Goto work
+</pre>
+</td>
+<td style="width:50%">
+<m>
+The <em>smartrobot</em> redirects the commands to the <em>basicrobot</em>.
+<ol>
+</ol>
+</m>
+</td>
+</tr>
+
+<tr>
+<td style="width:50%">
+<m><h3>REQUIREMENT: <ks>req-step</ks></h3>  </m>
+<pre>
+	State doStep{ 
+ 		onMsg( step : step( T ) ){
+			["StepTime = payloadArg(0).toLong()"]
+			["startTimer()"]  <kc>//REQUIREMENT req-step-time</kc>
+			forward basicrobot -m cmd : cmd( w )
+		}  
+	} 
+	Transition t0 
+		whenTimeVar StepTime   -> <ks>endStep</ks>	
+		whenMsg stop           -> <ks>stepStop</ks>		  
+		whenEvent obstacle     -> <ks>stepFail</ks>
+		
+	State endStep{  
+		forward basicrobot -m cmd : cmd( h ) 
+  		<kc>//TODO:</kc> <k>req-step-info => success</k>
+  	}
+	Goto work
+		
+</pre>
+</td>
+<td style="width:50%">
+<m>
+The <em>smartrobot</em> starts a timer, sends a <ks>w</ks> command to the <em>basicrobot</em> and waits for the end of the <kc>StepTime</kc>
+or for a <k>stop</k> command or for an  <k>obstacle</k> event.
+<br/><br/>
+If the <ks>StepTime</ks> expires, the <em>smartrobot</em> must fulfill the requirement <ks>req-step-info</ks>.
+Afterwards, it returns to the state <tt>work</tt>.
+ 
+<ol>
+</ol>
+</m>
+</td>
+</tr>
+
+
+<tr>
+<td style="width:50%">
+<m><h3>REQUIREMENT: <ks>req-stop</ks>, <ks>req-step-time</ks></h3>  </m>
+<pre>
+	State stepStop{ 
+		<kc>//REQUIREMENT req-step-time</kc>
+		["Duration=getDuration()"]  <kc>//getDuration: built-in (with ref. to startTimer)</kc>
+		forward basicrobot -m cmd : cmd( h ) 
+  		<kc>//TODO:</kc> <k>req-step-time   =>  elapsed-time = Duration</k>
+ 		<kc>//TODO:</kc> <k>req-step-info   =>  elapsed-time = Duration</k>
+ 	}
+	Goto work  	
+</pre>
+</td>
+<td style="width:50%">
+<m>
+If the <ks>stop</ks> command arrives before that  <kc>StepTime</kc> expires, the <em>smartrobot</em> must stop the robot and 
+fulfill the requirements  <ks> req-step-time</ks> and <ks>req-step-info</ks>.
+Afterwards, it returns to the state <tt>work</tt>.
+<br/><br/>
+The state <k>stepFail</k> is quite similar to <tt>stepStop</tt>: the only difference is about the reason of the failure
+(obstacle).
+<ol>
+</ol>
+</m>
+</td>
+</tr>
+
+
+</table>
+
+<br/>
+The full code can be found in
+<a href="../modelsOld/requirements/smartrobot.txt" target="code">smartrobot.qak</a>
+
+<h2>Problem analysis</h2>
+Our problem analysis starts from the <kc>TODO</kc> sentences in the model of the system introduced after requirement-analysis.
+
+<h3>The requirement <ks>req-step-info</ks></h3>
+The requirement <ks>req-step-info</ks> could be fulfilled by emitting and event in the states <k>stepStop</k> ad <k>stepFail</k>. 
+In fact, an event emitted by a QActor (<em>smartrobot</em> in our case) that is called as an <tt>ExternalActor</tt> by another actor,
+can perceive  by the caller (see
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakEvents2020.html" target="lab">
+LabQakEvents2020 | Qak-event propagation</a>).
+<br/><br/>
+However, the requirement seems to state that information about the result of the command <k>step</k> should be made available to the caller <ks>C</ks> only.
+If such an interpretation is confirmed by the customer, the emission of an event is not the correct approach.
+<br/><br/>
+We observe that this problem (and other 'open problems') can be overcome by supposing that the <k>step</k> command  is 
+logically sent as a <k>request</k> rather than a <i>dispatch</i>. In other words, from a logical point of view, we could write :
+
+<pre>
+
+<k>Request</k>  step     :  step(DURATION) 		<kc>//Instead of Dispatch  step  :  step(DURATION)</kc>
+
+</pre>
+
+
+The requirement <ks>req-step-info</ks> can be now fulfilled by sending a proper 'answer' to a <kc>step</kc>-request. 
+For example, we could imagine the existence of a <k>reply</k> message-type and introduce two different answer messages:
+one for the success and one for the failure of the  <k>step</k> command:
+
+<pre>
+
+<k>Reply</k>    stepdone  :  stepdone(V)
+
+<k>Reply</k>    stepfail  :  stepfail(DURATION)
+
+</pre>
+
+
+
+The problem now is:
+<div class="remark">
+<m>
+Do we have the proper expressive power to model <i>request-response interaction</i> and to provide proper implementation for
+this kind of actor interaction-pattern?
+<br/><br/>
+If the answer is <k>no</k>, we must 'implement at application-level' the concept of <i>reply to a request</i>.
+</m>
+</div>
+<m>
+The the <tt>qak-metamodel</tt> until version <ks>1.1.6</ks> did have the expressive power, but did not provide the implementation.
+<hr/>
+
+Thus, the task of <i>reply</i> to the caller has to be done by the application designer. This task
+is 'technically possible', since the application designer can inspect the low-level representation of the <k>step</k> dispatch,
+find the name of the caller and from that name, find the  TCP-connection-proxy created by the <tt>qak-infrastructure</tt>
+on the <em>smartrobot</em> node.
+</m>
+<hr/>
+
+<h1 id="reqreply">Messages of type <k>request</k> and <k>replyTo</k></h1>
+<hr/><m>
+From version <ks>1.1.7</ks> the code required to implement  <i>request</i> and <i>reply</i> has been included in the <tt>qak-infrastucture</tt>
+and proper code generated to call it, by using a new <tt>qak-operations</tt> named <k>request</k> and <k>replyTo</k>.
+</m><hr/>
+
+<h2>Modeling the interaction by using a request-response pattern</h2>
+
+From <tt>qak-metamodel</tt>  version <ks>1.1.7</ks>, we can modify our model as follows:
+
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+<pre>
+Dispatch cmd       : cmd(X)
+<k>Request</k>  <ks>step</ks>      :  step(DURATION)
+<k>Reply</k>    <ks>stepdone</ks>  :  stepdone(V)
+<k>Reply</k>    <ks>stepfail</ks>  :  stepfail(DURATION,CAUSE) 
+Dispatch stop      :  stop(V) 
+Event  obstacle    : obstacle( DISTANCE )
+Event  alarm       : alarm(V)
+
+...
+	State work{	}
+	Transition s0 
+ 			whenMsg cmd      -> handleCmd
+			<k>whenRequest</k> <ks>step</ks> -> doStep
+			whenMsg stop     -> handleStopNotExpected		 
+ 		    whenEvent obstacle -> ignoreObstacle 
+...			
+			
+	State endStep{  <kc>//REQUIREMENT  req-step-info</kc>
+		forward basicrobot -m cmd : cmd( h ) 
+ 		<k>replyTo</k> <ks>step</ks> <k>with</k> <ks>stepdone : stepdone(ok)</ks>
+  	}
+	Goto work
+
+	State stepStop{ <kc>//REQUIREMENT req-stop, req-step-time, req-step-info</kc>
+		["Duration=getDuration()"]   
+		forward basicrobot -m cmd : cmd( h ) 
+		<k>replyTo</k> <ks>step</ks> <k>with</k> <ks>stepfail : stepfail($Duration, stopped)</ks>
+ 	}
+	Goto work  	
+
+	State stepFail{ //REQUIREMENT req-step-time, req-step-info
+		["Duration=getDuration()"]   
+		<k>replyTo</k> <ks>step</ks> <k>with</k> <ks>stepfail : stepfail($Duration, obstacle)</ks>
+ 		<b>emit alarm : alarm( stepobstacle ) </b>
+  	}
+	Goto work  	
+	
+</pre>
+</td>
+<td>
+
+<hr/>
+<m>
+The <tt>qak-operation</tt> <k>replyTo</k> specifies that the answer is related to a specific request.
+The <tt>qak-infrastucture</tt> sends the answer to the actor that made the call. 
+
+<br/>
+The state <k>stepFail</k> emits the event <kc>alarm</kc> to test event-propagation. See:
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakEvents2020.html" target="web">
+LabQakEvents2020 | Qak-event propagation </a> 
+</m>
+<hr/>
+
+The full code can be found in
+<a href="../modelsOld/project/smartrobot.txt" target="code">smartrobot.qak</a>
+
+
+
+
+<h3>A caller</h3>
+<pre>
+	State s0   {	   
+ 		<k>request</k>  <em>smartrobot</em>  -m  step :  step(1000)
+  	} 
+  	Goto waitanswer
+  	
+  	State waitanswer{
+	}  
+	Transition t0 
+		<k>whenReply</k>  <ks>stepdone</ks>  -> stepCompleted
+		<k>whenReply</k>  <ks>stepfail</ks>  -> stepFailed 
+ 
+</pre>
+ </td>
+</tr>
+</table>
+
+<h1>Working with QActors</h1>  
+At this point of our development, a QActor can be viewed as a <k>reusable</k> resource that can be used by sending messages to it, in three main forms: 
+<i>fire-and-forget</i> (dispatch), <i>request-response</i> (request) and <i>information-emission</i> (event).
+Since the QActor can emit events in its turn, it can be considered also an <k>observable</k> resource.
+<br/><br/>
+The architecture of a QActor-based system must include at least one QActor that can be used by other QActors 
+or by non-QActor code (called here 'alien' code). 
+
+<br/><br/>
+In order to present a the architecture of a QActor-based system in graphical form, let us introduce - in informal way - some reference notation that we will
+use from now on.
+
+<h2>Towards a graphical representation</h2>
+
+The main symbols of a possible graphical representation are reported in the following picture (legenda):
+ <center><table style="width:98%">
+<tbody>	
+<tr>
+<td style="width:45%">
+<h3>Legenda</h3>
+<img src="./img/legendaAll.png" alt="legendaAll" width="95%"  /></td>
+ <td><m> 
+
+
+<ul>
+<li>A QActor <em>qa2</em> can use another QActor <em>qa1</em>  if they are both defined in the same <tt>qak-model</tt>. 
+Interaction can be based on messages of type <i>dispatch, event, request</i>.<br/><br/></li>
+<li>The actor <em>qa1</em> can be viewed by <em>qa2</em> as an <k>ExternalActor</k>. 
+In this case, <em>qa2</em> is not included in the <tt>qak-model</tt> that defines <em>qa1</em>.
+Thus, <em>qa1</em> does not (statically) known the Context of <em>qa2</em> (and of any other QActor-caller).
+However, the vice-versa is not true, since the <tt>qak-model</tt> of <em>qa2</em> must include the Context of <em>qa1</em>. 
+<br/><br/></li>
+<li>A QActor <em>qa1</em> used by an 'alien' code <em>Cx</em> is viewed as a '<b>TCP-server</b>' working on some port.</li>
+
+</ul>
+  </m>
+ </td>
+</tr>
+</table>
+</center>
+
+
+<h2>Building and run a system</h2>  
+<center><table style="width:98%">
+<tbody>	
+<tr>
+<td style="width:45%"><img src="./img/smartRobotSystem.png" alt="smartRobotSystem" width="95%"  /></td>
+ <td><m> 
+ <em>C1</em>: see the jupyter notebook <a href="BasicRobotUsage.ipynb" target="jup">BasicRobotUsage.ipynb</a><br/>
+<em>C2</em>: see the jupyter notebook <a href="SmartRobotUsage.ipynb" target="jup">SmartRobotUsage.ipynb</a><br/>
+<hr/>
+<em>smartrobot</em>  statically 'knowns' <em>basicrobot</em> but not vice versa.<br/>
+<em>smartrobotcaller</em>  statically 'knowns' <em>smartrobot</em> but  not  <em>basicrobot</em>.
+<ul>
+<li><em>basicrobot</em> emits <tt>obstacle</tt> and <tt>alarm(obstacle)</tt> when it hits an obstacle. These events
+can be perceived by <em>smartrobot</em> and <em>C1</em> but not by <em>smartrobotcaller</em> and <em>C2</em>.</li>
+<li><em>smartrobot</em> emits  <tt>alarm(stepobstacle)</tt>  when the command <k>step</k> fails. This event can be
+perceived by <em>basicrobot</em>, <em>smartrobotcaller</em> and <em>C2</em></li>
+<li><em>smartrobotcaller</em> emits  <tt>alarm(stepcallerfails)</tt>  when its command <k>step</k> 
+returns a <k>stepfail</k> reply. This event can be
+perceived by <em>smartrobot</em> </li>
+</ul> 
+ </m>
+ </td>
+</tr>
+</table>
+</center>
+
+<br/>
+The code of <tt>smartrobotcaller</tt> can be found in project <tt>it.unibo.basicrobotusage</tt>
+<!--
+<a href="../modelsOld/project/smartrobot.txt" target="code">smartrobot.qak</a>
+-->
+<h2>Test plans</h2>  
+
+<h2>Testing</h2> 
+
+<h2>Deployment</h2> 
+
+<h2>Maintenance</h2> 
+	      	
+<br/><br/> 	
+</div>  
+
+<div style="background-color:rgba(86, 56, 253, 0.9); width:100%;text-align:center;font-size:small;color:white">
+By AN Unibo-DISI  
+</div> 
+
+</body>
+</html>
