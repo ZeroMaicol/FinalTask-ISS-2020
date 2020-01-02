@@ -146,25 +146,44 @@ table, th, td {
     
 <head>
    
-<title>Lab ...</title></head>
+<title>FinalTask-ISS-2020</title></head>
     
 <body>
 <div id="top">
-<h1>81614 - LABORATORIO DI SISTEMI SOFTWARE <font size="5"></font> </h1>
+<h1>FinalTask-ISS-2020<font size="5"></font> </h1>
 </div>  
 
 <div class="body"> 
 <h2>Introduction</h2>
- 
+The <em>supervisor</em> of a waiting room (<em>wroom</em>) of a large train station intends to promote automatic collection of the rubbish, by means of ddr robots.
+To this end, some specialized robot (<em>detector</em>) periodically explores the surface of the <em>wroom</em> in order to collect objects 
+made of recyclable material, in particular bottles made of <i>plastic</i> .
  
 <h2>Requirements</h2>
 <div class="req">
-<div class="remark">
-<ks>COPY</ks> here the text given by the customer.<br/>
-Remember the <a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.issLabStart/userDocs/81614LabISSIntro.html#motto" target="web"> 
-motto</a>:   <k>no code ... without requirements</k>.
-</div>
+Design and build the software to put on board of the <em>plasticBox</em> and of the <em>detector</em>. The system
+must be able to accept the following commands sent by the <i>smart-phone</i> of the <em>supervisor</em>:
 
+<ul>
+<li><bc>explore</bc>: the <em>detector</em> must execute the task <i>Explore the room</i>.</li>
+<!-- <li><em>empty</em>:   the <em>detector</em> must execute in autonomous way  the <i>Empty the detectorBox</i> task.</li> -->
+<li><bc>suspend</bc>:   the <em>detector</em> must execute the task <i>Go to home</i>. </li>
+<li><bc>terminate</bc>:  the <em>detector</em> must execute the task <i>Terminate the work</i>.</li>
+
+</ul>
+Any command sent by the <em>supervisor</em> can be executed only if the room is <b>NOT</b> in the <bc>state-TVOCHigh</bc>.
+
+The system must also include an 'agent' able to detect the <bc>state-TVOCHigh</bc> and to 
+send in automatic way the command <bc>suspend</bc> to the robot. 
+
+
+<br><br>
+Moreover, the <i>smart-phone</i> of the <em>supervisor</em> should be automatically updated with information about:
+<ul>
+<li>the current  position of the robot on a map of the <em>wroom</em>. The map should also show the position of the detected non-plastic objects;</li>
+<li>the space still available in its <em>detectorBox</em>;</li>
+<li>the space still available in the  <em>plasticBox</em>.</li>
+</ul>
 </div>
 
 <h2>Requirement analysis</h2>
