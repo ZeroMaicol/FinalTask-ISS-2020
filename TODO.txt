@@ -1,0 +1,15 @@
+QActors
+	BasicRobot (Dovrebbe andare bene quello che abbiamo)
+	Detector (Il detector è il robot vero, sarebbe tipo lo smart robot credo, ci mettiamo la logica. Da scegliere se DetectorBox è altro componente o no)
+	Collector/PlasticBox (Sarebbe il bidone e deve trackare le bottiglie via CoAP credo)
+	Indoor Air Quality Sensor (Sarà tipo il sentinel, così che aggiorna via CoAP lo stato della stanza e stoppa il robot)
+	
+Altro
+	Planner (Lo abbiamo ma vediamo se è da sistemare)
+	"Water Filling" Algorithm (Serve una classe che gestisca l'algoritmo per navigare la stanza)
+	Front-End (Modifichiamo il frontend20 del prof, tanto cambiamo i bottoni)
+	Android (Non è richiesto, se vogliamo buttare tempo vedremo alla fine se ha senso motivandolo)
+
+BOH?
+	Chi update le cose sullo smartphone? Il robot o un'altra entità che traccia la mappa?
+	Per mostrare i dati basta usare CoAP come aveva fatto il prof e con l'observer aggiorni ogni volta che cambiano.
