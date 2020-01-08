@@ -13,3 +13,17 @@ Altro
 BOH?
 	Chi update le cose sullo smartphone? Il robot o un'altra entità che traccia la mappa?
 	Per mostrare i dati basta usare CoAP come aveva fatto il prof e con l'observer aggiorni ogni volta che cambiano.
+
+
+
+
+/////////////////////SPRINT 1////////////////////////
+Robot che va dritto verso la bottiglia e la raccoglie.
+La bottiglia è messa a mano davanti al robot.
+
+/////////////////////SPRINT 2////////////////////////
+Esplorazione della stanza con raccoglimento e svuotamento del bidone.
+Implementazione del sensore di allarme.
+
+/////////////////////SPRINT 3////////////////////////
+Frontend
