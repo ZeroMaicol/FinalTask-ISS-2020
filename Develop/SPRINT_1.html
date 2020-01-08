@@ -150,43 +150,54 @@ table, th, td {
     
 <body>
 <div id="top">
-<h1>FinalTask-ISS-2020<font size="5"></font> </h1>
+<h1>SPRINT 1 - FinalTask-ISS-2020<font size="5"></font> </h1>
 </div>  
 
 <div class="body"> 
-<h2>Introduction</h2>
-The <em>supervisor</em> of a waiting room (<em>wroom</em>) of a large train station intends to promote automatic collection of the rubbish, by means of ddr robots.
-To this end, some specialized robot (<em>detector</em>) periodically explores the surface of the <em>wroom</em> in order to collect objects 
-made of recyclable material, in particular bottles made of <i>plastic</i> .
- 
 <h2>Requirements</h2>
 <div class="req">
-Design and build the software to put on board of the <em>plasticBox</em> and of the <em>detector</em>. The system
-must be able to accept the following commands sent by the <i>smart-phone</i> of the <em>supervisor</em>:
 
+Design and build a software system where a <em>detector</em>, equipped with a local container (<em>detectorBox</em>), is able to collect a plastic bottle positioned in front of it.<br/>
+The system must be able to accept the following commands sent by the smart-phone of the supervisor:
 <ul>
-<li><bc>explore</bc>: the <em>detector</em> must execute the task <i>Explore the room</i>.</li>
-<!-- <li><em>empty</em>:   the <em>detector</em> must execute in autonomous way  the <i>Empty the detectorBox</i> task.</li> -->
-<li><bc>suspend</bc>:   the <em>detector</em> must execute the task <i>Go to home</i>. </li>
-<li><bc>terminate</bc>:  the <em>detector</em> must execute the task <i>Terminate the work</i>.</li>
-
-</ul>
-Any command sent by the <em>supervisor</em> can be executed only if the room is <b>NOT</b> in the <bc>state-TVOCHigh</bc>.
-
-The system must also include an 'agent' able to detect the <bc>state-TVOCHigh</bc> and to 
-send in automatic way the command <bc>suspend</bc> to the robot. 
-
-
-<br><br>
-Moreover, the <i>smart-phone</i> of the <em>supervisor</em> should be automatically updated with information about:
-<ul>
-<li>the current  position of the robot on a map of the <em>wroom</em>. The map should also show the position of the detected non-plastic objects;</li>
-<li>the space still available in its <em>detectorBox</em>;</li>
-<li>the space still available in the  <em>plasticBox</em>.</li>
+<li><bc>explore</bc>: the <em>detector</em> must reach the bottle and collect it.</li>
 </ul>
 </div>
 
+<h2>Requirement analysis</h2>
+<div class="remark">
+<ks>GOAL</ks>: <i>i)</i> clarify the meaning of the <i>names</i> and of the <i>verbs</i> included in the requirement text given by the customer.
+<i>ii)</i> define a first working prototype (and a proper set of <k>functional TestPlan</k>) as a formal model of the requirements.
+
+</div>
+
+<h2>Problem analysis</h2>
+<div class="remark">
+<ks>WARNING</ks>: expressions like <i>'we have chosen to ...'</i>, <i>'I decided ...'</i>, etc. are <k>forbidden</k> here. <br/>
+Rather, this section should include sentences like
+<b><i>'this (aspect of the) problem implies that ...'</i></b> or <i><b>'the usage of this (legacy) component requires that ...'</i></b>, etc.
+<br/><br/>
+<ks>GOAL</ks>: 
+<i>i)</i>define the <k>logical architecture</k> of the system  as an executable model
+<i>ii)</i>give a <k>quantitative measure of the effort/resources</k> necessary to build the system 
+<i>iii)</i> define a (first) <k>product backlog</k>.
+</div>
+
+<h2>Test plans</h2> 
+<div class="remark">
+<ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
+</div>
+
 <h2>Project</h2> 
+
+<h2>Testing</h2> 
+<div class="remark">
+<ks>GOAL</ks>: complete the <k>functional TestPlans</k> according to the project code and execute them.
+</div>
+
+<h2>Deployment</h2> 
+
+<h2>Maintenance</h2> 
 
 <table style="width:100%" border="1">
 <tr>

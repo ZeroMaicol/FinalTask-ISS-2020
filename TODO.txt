@@ -2,7 +2,7 @@ QActors
 	BasicRobot (Dovrebbe andare bene quello che abbiamo + AGGIUNGI COMANDO BASE: RACCOGLI, SVUOTA)
 	Detector (Il detector è il robot vero, sarebbe tipo lo smart robot credo, ci mettiamo la logica. Da scegliere se DetectorBox è altro componente o no)
 	Collector/PlasticBox (Sarebbe il bidone e deve trackare le bottiglie via CoAP credo)
-	Indoor Air Quality Sensor (Sarà tipo il sensore radar, magari nel contesto del detector, così che aggiorna via CoAP lo stato della stanza e stoppa il robot)
+	Indoor Air Quality Sensor (Sarà tipo il sensore radar, lo mettiamo nell'agent sensor, così che aggiorna via CoAP lo stato della stanza e stoppa il robot)
 	
 Altro
 	Planner (Lo abbiamo ma vediamo se è da sistemare)
@@ -20,6 +20,17 @@ BOH?
 /////////////////////SPRINT 1////////////////////////
 Robot che va dritto verso la bottiglia e la raccoglie.
 La bottiglia è messa a mano davanti al robot.
+
+1) FRONTEND: Un bottone che manda il messagio explore al detector. (Vedi il frontend del prof)
+   Scelta derivata da analisi del problema perché serve mandare messaggio dal cellulare e tutti hanno un browser.
+2) DETECTOR: La mind del robot che aspetta il messaggio explore, poi fa W e quando arriva alla bottiglia la raccoglie. 
+3) BASIC ROBOT: Da aggiungere il comando raccogli fittizio per il virtual robot.
+4) VIRTUAL ROBOT: Da collegare il comando raccogli al fatto che la bottiglia scompare. (Dovrebbe essere remove, vedi tra gli ultimi commit del prof)
+5) TEST PLANS: Da fare in JUnit. Robot raccoglie bottiglia, nasce necessità di CoAP, da dire in analisi problema a conseguenza requisiti.
+6) TESTING
+
+In analisi del problema:
+Si fa tutto, il progetto sarà semplicemente l'analisi. Tanto abbiamo già quasi tutto e il basicrobot è già technology independent, è però da scrivere bene sta cosa.
 
 /////////////////////SPRINT 2////////////////////////
 Esplorazione della stanza con raccoglimento e svuotamento del bidone.

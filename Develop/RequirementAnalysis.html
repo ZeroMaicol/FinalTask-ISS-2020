@@ -140,7 +140,7 @@ table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
 }         
-    
+   
   -->
 </style>
     
@@ -187,40 +187,84 @@ Moreover, the <i>smart-phone</i> of the <em>supervisor</em> should be automatica
 </div>
 
 <h2>Requirement analysis</h2>
-<h3>Clarifications</h3>
+<h3>Naming clarifications</h3>
+
+After a discussion with the client it was decided that the analyst will be responsible of all the decisions related to behaviours and interactions that are not well defined in the requirements.
+
 <h4>Plastic Box</h4>
 <ul>
-<li> Structure: .</li>
-<li> Interaction: .</li> 
-<li> Behaviour: .</li> 
+<li> <strong>Structure</strong>: The plastic box its an atomic entity with its own control flow.</li>
+<li> <strong>Interaction</strong>: The given requirements have no details related to the behaviour of the plastic box.</li>
+<li> <strong> Behaviour</strong>: The collector works as a smart device, able to expose and update - via CoAP - its content.</li>
 </ul>
+
 <h4>Detector</h4>
 <ul>
-<li> Structure: .</li>
-<li> Interaction: .</li> 
-<li> Behaviour: .</li> 
+<li> <strong> Structure</strong>: The detector could be composed by different components but at this level its not relevant.
+				Its an atomic entity with its own control flow, moreover, the detector is equipped with a detector box, a local container.</li>
+<li> <strong> Interaction</strong>: The detector must be able to accept commands sent by the smart-phone of the supervisor.</li> 
+<li> <strong> Behaviour</strong>: 
+The behaviour of the detector is managed by the supervisor, which can tell the robot to perform a set of tasks: <br/> 
+<ol>
+<li><i>Explore the room</i>. This task performs the following actions:
+	<ul>
+	<li>explore the <em>wroom</em> in a <i>systematic way</i> in order to find static obstacles;</li>
+	<li>if the obstacle is not made made of plastic, keep track of its position in the <em>wroom</em> and continue the exploration; </li>
+	<li>if the detected object is made of plastic, put it (if there is space) in the <em>detectorBox</em>;
+	if the <em>detectorBox</em> is full or if the room has been completely explored, execute the task <i>Empty the detectorBox</i>. </li>
+	</ul>
+ <br> 
+</li>
+
+<li><i>Empty the detectorBox</i>. This task performs the following actions:
+	<ul>
+	<li>if the <em>detectorBox</em> is empty, execute the task <i>Go to home</i>;
+ 	</li><li>check if the <em>plasticBox</em> is able to accept the objects contained in the <em>detectorBox</em>; 
+	if it cannot accept, send a message to the <em>supervisor</em> and wait for a command;</li>
+	<li>otherwise, save the current position of the robot(<em>beforeEmptyPos</em>),
+		then move to the  <em>plasticBox</em>, transfer into it the content of the <em>detectorBox</em> 
+	and return to the task <i>Explore the room</i>, restarting from the saved <em>beforeEmptyPos</em> .
+	</li>
+	</ul>
+<br>
+</li> 
+
+<li><i>Go to home</i>. This task performs the following actions:
+	<ul>
+	<li>return the robot to its <em>discoveryHome</em></li>	
+	</ul>
+<br>
+</li>
+
+<li><i>Terminate the work</i>. This task performs the following actions:
+	<ul>
+	<li>if the <em>detectorBox</em> is empty, return to the <em>discoveryHome</em>;
+	otherwise, execute the task <i>Empty the detectorBox</i> and then return  to the <em>discoveryHome</em></li>	
+	</ul>
+</li>
+</ol>
+
+</li> 
 </ul>
+
 <h4>Supervisor</h4>
 <ul>
-<li> Structure: .</li>
-<li> Interaction: .</li> 
-<li> Behaviour: .</li> 
+<li> <strong> Structure</strong>: The supervisor its an atomic entity with its own control flow.</li>
+<li> <strong> Interaction</strong>: The supervisor must be able to send the defined commands to the system and should be automatically updated with a set of informations.</li> 
+<li> <strong> Behaviour</strong>: The given requirements have no details related to the behaviour of the supervisor.</li> 
 </ul>
-<h4>Wroom</h4>
-<ul>
-<li> Structure: .</li>
-<li> Interaction: .</li> 
-<li> Behaviour: .</li> 
-</ul>
-<h4>Detector Box</h4>
-<ul>
-<li> Structure: .</li>
-<li> Interaction: .</li> 
-<li> Behaviour: .</li> 
-</ul>
-<h3>First prototype</h3>
-<h3>Functional TestPlan</h3>
 
+
+<h4>Wroom</h4>
+The wroom is not an active entity but the context where the components are concentrated.
+
+<h4>Sensor Agent</h4>
+After discussing with the client we defined the word 'agent' as an entity equipped with a sensor.
+<ul>
+<li> <strong>Structure</strong>: The 'agent' its an atomic entity with its own control flow equipped with an air quality sensor.</li>
+<li> <strong>Interaction</strong>: The 'agent' its able to send the command suspend to the robot.</li>
+<li> <strong> Behaviour</strong>: The 'agent' is able to detect the state-TVOCHigh from the sensor.</li>
+</ul>
 </div>  
 
 <div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">

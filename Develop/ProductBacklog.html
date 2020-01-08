@@ -154,43 +154,20 @@ table, th, td {
 </div>  
 
 <div class="body"> 
-<h2>Introduction</h2>
-The <em>supervisor</em> of a waiting room (<em>wroom</em>) of a large train station intends to promote automatic collection of the rubbish, by means of ddr robots.
-To this end, some specialized robot (<em>detector</em>) periodically explores the surface of the <em>wroom</em> in order to collect objects 
-made of recyclable material, in particular bottles made of <i>plastic</i> .
- 
-<h2>Requirements</h2>
-<div class="req">
-Design and build the software to put on board of the <em>plasticBox</em> and of the <em>detector</em>. The system
-must be able to accept the following commands sent by the <i>smart-phone</i> of the <em>supervisor</em>:
+<h2>Product Backlog</h2>
 
-<ul>
-<li><bc>explore</bc>: the <em>detector</em> must execute the task <i>Explore the room</i>.</li>
-<!-- <li><em>empty</em>:   the <em>detector</em> must execute in autonomous way  the <i>Empty the detectorBox</i> task.</li> -->
-<li><bc>suspend</bc>:   the <em>detector</em> must execute the task <i>Go to home</i>. </li>
-<li><bc>terminate</bc>:  the <em>detector</em> must execute the task <i>Terminate the work</i>.</li>
-
-</ul>
-Any command sent by the <em>supervisor</em> can be executed only if the room is <b>NOT</b> in the <bc>state-TVOCHigh</bc>.
-
-The system must also include an 'agent' able to detect the <bc>state-TVOCHigh</bc> and to 
-send in automatic way the command <bc>suspend</bc> to the robot. 
-
-
-<br><br>
-Moreover, the <i>smart-phone</i> of the <em>supervisor</em> should be automatically updated with information about:
-<ul>
-<li>the current  position of the robot on a map of the <em>wroom</em>. The map should also show the position of the detected non-plastic objects;</li>
-<li>the space still available in its <em>detectorBox</em>;</li>
-<li>the space still available in the  <em>plasticBox</em>.</li>
-</ul>
-</div>
-
-
-<h2>Test plans</h2> 
-<div class="remark">
-<ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
-</div>
+<h3>SPRINT 1</h3>
+Feature 1 - DETECTOR: La mind del robot che aspetta il messaggio explore, poi fa W e quando arriva alla bottiglia la raccoglie. <br/>
+Feature 2 - BASIC ROBOT: Da aggiungere il comando raccogli fittizio per il virtual robot.<br/>
+Feature 3 - VIRTUAL ROBOT: Da collegare il comando raccogli al fatto che la bottiglia scompare.<br/>
+FRONTEND: Un bottone che manda il messagio explore al detector e label che prende da CoAP il contenuto di detector box.<br/>
+TEST PLANS: Da fare in JUnit. Robot raccoglie bottiglia.<br/>
+TESTING<br/>
+<br/>
+Ognuno svolgerà le parti di relazione che sono inerenti alle feature svolte, compresa analisi dei requisiti guardando quella già fatta e adattandola, comportandosi sia da analista che da progettista.<br/>
+Maicol Forti: DETECTOR + analisi requisiti punto 2 e 3 solo io.<br/>
+Christian Serra: VirtualRobot + FRONTEND.<br/>
+Davide Bondi: BasicRobot + TestPlans?.<br/>
 
 <table style="width:100%" border="1">
 <tr>
