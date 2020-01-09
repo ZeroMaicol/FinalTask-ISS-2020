@@ -17,6 +17,7 @@ socket.on( 'message', function(v){
   console.log("RECEIVED " + v);
   if( v.indexOf("distance")  >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
   if( v.indexOf("pos")       >= 0 ){document.getElementById('robotDisplay').innerHTML=v; }
+  if( v.indexOf("exploreAck")       >= 0 ){document.getElementById('exploreState').innerHTML=v; }
   //if( v.indexOf("obstacle")  >= 0 ){document.getElementById('infoDisplay').innerHTML=v; }
   //if( v.indexOf("polar")     >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
 
@@ -34,11 +35,32 @@ that emits modelChange
 ===============================================================================
 --> 
 <div style="background-color: #D2B4DE">
-<h2>Robot Console</h2>   
+<h2>Supervisor Console</h2>   
+
 <center>
-			<table >
+	<table>
+		<tr>
+			<td align="center">
+				<form action="/e" method="post">
+					<input type="submit" style="font-size:30px;" value="explore" >
+				</form>
+			</td>
+		</tr>
+	</table>
+</center>
+
+<!-- <center>
+			<table>
 					<tr>
 						<td></td>
+						<td align="center">
+							<form action="/q" method="post">
+									<input type="submit" style="font-size:30px;" value="Pick up" >
+							</form>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
 						<td></td>
 						<td align="center">
 							<form action="/w" method="post">
@@ -46,14 +68,8 @@ that emits modelChange
 							</form>
 						</td>
 						<td></td>
-						<td></td>
 					</tr>
 					<tr>
-						<td align="center">
-							<form action="/z" method="post">
-							  	<input type="submit" style="font-size:30px;"  value="z" >
-							</form>
-						</td>
 						<td align="center">
 							<form action="/l" method="post">
 							  	<input type="submit" style="font-size:30px;"  value="left" >
@@ -71,14 +87,8 @@ that emits modelChange
 							  	<input type="submit" style="font-size:30px;" value="right"  >
 							</form>
 						</td>
-						<td align="center">
-							<form action="/x" method="post">
-							  	<input type="submit" style="font-size:30px;"  value="x" >
-							</form>
-						</td>
 					</tr>
 					<tr>
-						<td></td>
 						<td></td>
 						<td align="center">
 							<form action="/s" method="post">
@@ -86,13 +96,12 @@ that emits modelChange
 							</form>
 						</td>
 						<td></td>
-						<td></td>
 					</tr>
 				</table>
-</center>
+</center> -->
  
 
-<h2>Application console</h2>   
+<!-- <h2>Application console</h2>   
 <center>
 			<table >	
 					<tr>
@@ -119,21 +128,11 @@ that emits modelChange
 				</table>
 </center>
 
-</div>
+</div> -->
 <div style="background-color: #FAF19C">
 	<div>
- 		<b>ROBOT STATE</b>: <span id="robotDisplay"></span>
+ 		<b>Explore STATE</b>: <span id="exploreState"></span>
   	</div>
-	<div>
- 		<b>INFO</b>: <span id="infoDisplay"></span>
-  	</div>
-	<div>
-  		<b>SONAR STATE</b>: <span id="sonarRobotDisplay"></span>
-	</div>
-	<div>
-  		<b>ROOM MAP</b>: <span id="mapDisplay"></span>
-	</div>
-
 </div>
 <center></center>
 </body>

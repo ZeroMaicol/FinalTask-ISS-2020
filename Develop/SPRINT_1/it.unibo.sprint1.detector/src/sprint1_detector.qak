@@ -8,7 +8,7 @@
  */ 
 System wroom
 
-//mqttBroker "localhost" : 1883  
+mqttBroker "localhost" : 1883  
  
 Dispatch cmd  : cmd(X)
 Dispatch updateBottle  : updateBottle(X)
@@ -16,14 +16,14 @@ Request  explore   :  explore(X)
 Reply    exploreAck  :  exploreAck(V)  
 Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
 
-Context ctxWroom ip [ host= "localhost"     port= 8020 ]// +mqtt  
+Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt  
 Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] //+mqtt      
 
 ExternalQActor basicrobot context ctxBasicRobot   
     
 QActor detector context ctxWroom{
 [" 
-var IsBottle      = false
+var IsBottle     = false
 "]  	
 	State s0 initial{
 		println("detector starting...")
@@ -38,6 +38,7 @@ var IsBottle      = false
   			
 
   	State doExplore{
+  		printCurrentMessage
   		replyTo explore with exploreAck : exploreAck(OK)
   		forward basicrobot -m cmd : cmd(w)
   	}

@@ -16,7 +16,7 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		 
-		var IsBottle      = false
+		var IsBottle     = false
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -33,6 +33,7 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 				}	 
 				state("doExplore") { //this:State
 					action { //it:State
+						println("$name in ${currentState.stateName} | $currentMsg")
 						answer("explore", "exploreAck", "exploreAck(OK)"   )  
 						forward("cmd", "cmd(w)" ,"basicrobot" ) 
 					}

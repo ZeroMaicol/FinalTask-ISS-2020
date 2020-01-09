@@ -5,6 +5,7 @@
 */
 const mqtt   = require ('mqtt');  //npm install --save mqtt
 const topic  = "unibo/qak/events";
+const jsTopic = "unibo/qak/js";
 
 var mqttAddr = 'mqtt://localhost'
 //var mqttAddr = 'mqtt://192.168.43.229'
@@ -25,7 +26,8 @@ exports.setIoSocket = function ( iosock ) {  //called by applCode
 
 
 client.on('connect', function () {
-	  client.subscribe( topic );
+    client.subscribe( topic );
+    client.subscribe( jsTopic );
 	  console.log("mqtt | client has connected successfully with " + mqttAddr);
 });
 
@@ -58,11 +60,28 @@ checRobotStatekEvent = function( msgStr ){
   	io.sockets.send( outS );
   }
 }
+
+contentReply = function( evId, msgStr, endStr ){
+  //msg(evId,event,SEMDER,none,evId(...),N)
+  var start = msgStr.indexOf(evId+"(");
+  if( start < 0 ) return "";
+  var body    =  msgStr.substr(start);	
+  var content =  body.substr( 0,body.indexOf(endStr)+endStr.length );	
+  console.log("mqtt | contentReply "+ evId + ":" +  content);
+  return content;
+}
+  
+checkReply = function( evId, msgStr ){
+  var reply =  contentReply( evId, msgStr, ")" );
+  if( reply.length > 0 ) io.sockets.send( reply );
+}
+
 //The message usually arrives as buffer, so I had to convert it to string data type;
 client.on('message', function (topic, message){
   //console.log("mqtt io="+ io );
   var msgStr = message.toString(); //message comes as buffer
-  //console.log("mqtt | RECEIVES:"+ msgStr );    
+  console.log("mqtt | RECEIVES:"+ msgStr );  
+  checkReply("exploreAck", msgStr);  
   //checkEvent( "obstacle", msgStr );
   //checkEvent( "polar",    msgStr ); 
   //checRobotStatekEvent( msgStr );
