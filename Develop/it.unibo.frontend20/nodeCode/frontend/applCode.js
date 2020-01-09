@@ -65,14 +65,22 @@ app.get('/', function(req, res) {
  app.post("/z", function(req, res,next) { handlePostMove("z","moving leftstep",  req,res,next); });  
  app.post("/x", function(req, res,next) { handlePostMove("x","moving rightstep", req,res,next); }); 
  app.post("/h", function(req, res,next) { handlePostMove("h","stopped",          req,res,next); });	
-	
+ app.post("/e", function(req, res,next) { handlePostExplore("e","explore",          req,res,next); });	
+ app.post("/q", function(req, res,next) { handlePostMove("q","pick up",          req,res,next); });	
+
  	
 //APPLICATION
  app.post("/0", function(req, res,next) { handlePostMove( "0", "reset",    req, res, next)});		
  app.post("/p", function(req, res,next) { handlePostMove( "p", "step",     req, res, next)});		
  app.post("/k", function(req, res,next) { handlePostMove( "k", "stepstop", req, res ,next)});	
  app.post("/b", function(req, res,next) { handlePostMove( "b", "boundary", req, res ,next)});	
- 		
+		 
+ 
+ function handlePostExplore( cmd, msg, req, res, next ) {
+	result = "applCode | Web server done: " + cmd
+	publishExploreRequestToDetector( cmd )
+	next();
+ }
 
 function handlePostMove( cmd, msg, req, res, next ){
 	result = "applCode | Web server done: " + cmd
@@ -84,8 +92,8 @@ function handlePostMove( cmd, msg, req, res, next ){
 var result = "";
 
 app.setIoSocket = function( iosock ){
- 	io    = iosock;
- 	//mqttUtils.setIoSocket(iosock);   //DEC 2019
+ 	io = iosock;
+ 	mqttUtils.setIoSocket(iosock); //DEC 2019
  	qakevh.setIoSocket(iosock);	//DEC 2019
 	console.log("applCode | SETIOSOCKET " );
 }
@@ -117,6 +125,12 @@ var publishMsgToResourceModel = function( target, cmd ){
   	var msgstr = "msg(modelChange,dispatch,js,resourcemodel,modelChange("+target+", "+cmd +"),1)"  ;  
   	console.log("applCode | publishMsgToResourceModel forward> "+ msgstr); 	
    	mqttUtils.publish( msgstr, "unibo/qak/resourcemodel" );
+}
+
+var publishExploreRequestToDetector = function(cmd){  
+	var msgstr = "msg(explore,request,js,detector,explore(1),1)"  ;  
+	console.log("applCode | publishExploreRequestToDetector requests> "+ msgstr); 	
+	mqttUtils.publish( msgstr, "unibo/qak/detector" );
 }
 
 var changeResourceModelCoap = function( cmd ){  
