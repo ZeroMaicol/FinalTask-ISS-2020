@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+
+a:hover {
+    background-color: #cccccc;
+}
+
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+
+h2 {
+    background-color: #d9fbff;
+    font-size: 130%;
+}
+
+h3 {
+	background-color: #e6ccff;
+    font-size: 120%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 110%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>FinalTask-ISS-2020</title></head>
+    
+<body>
+<div id="top">
+<h1>SPRINT 1 - FinalTask-ISS-2020<font size="5"></font> </h1>
+</div>  
+
+<div class="body"> 
+<h2>Requirements</h2>
+<div class="req">
+
+Design and build a software system where a <em>detector</em>, equipped with a local container (<em>detectorBox</em>), is able to collect a plastic bottle positioned in front of it.<br/>
+The system must be able to accept the following commands sent by the smart-phone of the <em>supervisor</em>:
+<ul>
+<li><bc>explore</bc>: the <em>detector</em> must reach the bottle and collect it.</li>
+</ul>
+</div>
+
+<h2>Requirement analysis</h2>
+<div class="remark">
+<ks>GOAL</ks>: <i>i)</i> clarify the meaning of the <i>names</i> and of the <i>verbs</i> included in the requirement text given by the customer.
+<i>ii)</i> define a first working prototype (and a proper set of <k>functional TestPlan</k>) as a formal model of the requirements.
+</div>
+<h3>Basicrobot</h3>
+<h4>The meta-model QAK</h4>
+
+
+<h3>Detector (Maicol)</h3>
+<ul>
+<li> <strong> Structure</strong>: The detector could be composed by different components but at this level its not relevant.
+				Its an atomic entity with its own control flow, moreover, the detector is equipped with a detector box, a local container.</li>
+<li> <strong> Interaction</strong>: The detector must be able to accept the command <bc>explore</bc> sent by the smart-phone of the supervisor.</li> 
+<li> <strong> Behaviour</strong>: The detector is able to collect a plastic bottle positioned in front of it. </li> 
+</ul>
+As previously described the software house already owns a basicrobot capable of basic commands that are exploitable to make this system. <br/>
+The detector will be a QActor defined with the meta-model QAK, that extends the capabilities provided by the basicrobot. <br/>
+<h4>First Prototype</h4>
+<h4>Functional TestPlan (Maicol)</h4>
+<strong>Collect</strong>: The detector, positioned in an empty room with no obstacle, is able to move towards a bottle positioned in front of it and collect it.<br/>
+
+<h2>Problem analysis</h2>
+<div class="remark">
+<ks>WARNING</ks>: expressions like <i>'we have chosen to ...'</i>, <i>'I decided ...'</i>, etc. are <k>forbidden</k> here. <br/>
+Rather, this section should include sentences like
+<b><i>'this (aspect of the) problem implies that ...'</i></b> or <i><b>'the usage of this (legacy) component requires that ...'</i></b>, etc.
+<br/><br/>
+<ks>GOAL</ks>: 
+<i>i)</i>define the <k>logical architecture</k> of the system  as an executable model
+<i>ii)</i>give a <k>quantitative measure of the effort/resources</k> necessary to build the system 
+<i>iii)</i> define a (first) <k>product backlog</k>.
+</div>
+
+<h3>Raccogli problematic (Basicrobot)</h3>
+
+<h3>Moving problematic (Detector) (Maicol)</h3>
+We can assume that the robot is moving in a flat euclidean space.<br/>
+The movement of the detector towards the bottle is already implemented in the set of basic commands provided by the basicrobot.<br/>
+In particular is defined by the command 'w' that the detector will delegate to the basicrobot.
+
+<h3>Communication problematic (Detector) (Maicol)</h3>
+The meta-model QAK provides the possibility of 3 different communication models: 
+<ul>
+<li> <strong>Fire and Forget</strong>: Simple communication but the components of the system must know each other. </li>
+<li> <strong>Request-Response</strong>: Same as Fire and Forget but also worse because of the quantity of messages sent. </li>
+<li> <strong>Event</strong>: Components don't need to know eachother, but it's more complicated to develop because it needs an infrastructure that supports this type of communication.</li> 
+</ul>
+In the scenario of the interaction between the detector and the supervisor, after discussing with the client, it was concluded that a request response model is required. <br/>
+The client explained that the detector must respond to the supervisor commands, but this will be further discussed in next SPRINT, for now what is decided to implement is a simple ACK response.<br/>
+
+<h3>The DetectorBox problematic (Detector) (Maicol)</h3>
+To adopt a divide and conquer strategy the DetectorBox is an entity separated from the detector.<br/>
+As a consequence the Detector Box is a QActor in the same context as the detector, that tracks the bottle that the detector has collected.
+
+<h3>The need of a CoAP resource (Detector) (Maicol)</h3>
+The code that will be developed won't be completed until some meaningful functional tests are developed and tested.<br/>
+To make the testing we need some knowledge somewhere, as a consequence the necessity of a resource is born.<br/>
+The resource implies a logical architecture that use an hexagonal meta-model.<br/>
+The QAK model that was already discussed, is provided of a Californium extension that permits already to make use of resources.<br/>
+
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<pre>
+object resServer{
+		fun init(owner: ActorBasic){
+			val server = CoapServer();
+			server.add( 
+				 resWroom(owner,  "wroom").add(	//robot
+					 resDetectorBox(owner, "detectorBox"))
+			)
+			server.start();			
+		}
+}
+</pre>
+<pre>
+class resWroom( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	fun init(){
+		println("resource $name  | created  " );		
+	}
+}
+</pre>
+</td>
+<td>
+<pre>
+class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var bottles = 0
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$bottles" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetBottles() }
+ 			else -> updateBottles()
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun updateBottles(){
+		bottles = bottles+1
+	}
+	
+	fun resetBottles(){
+		bottles = 0
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3>Functional Architecture Detector and DetectorBox (Maicol)</h3>
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<pre>
+QActor detector context ctxWroom{
+["var IsBottle = false"]  	
+	State s0 initial{
+		println("detector starting...")
+		delay 2000
+ 		println("detector started!")	
+	}
+	Goto work
+	State work{} 
+	Transition t0 
+ 			whenRequest explore -> doExplore 			
+  	State doExplore{
+  		replyTo explore with exploreAck : exploreAck(OK)
+  		forward basicrobot -m cmd : cmd(w)
+  	}
+  	Transition t1
+  		whenEvent virtualobstacle -> checkObstacle
+	State checkObstacle{ //REQUIREMENT req-onestep-time, req-onestep-info
+		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
+			["  
+			  IsBottle = payloadArg(0).startsWith(\"bottle\")
+			"] 			
+ 			if "IsBottle" {  //remove the bottle
+ 				forward basicrobot -m cmd : cmd( $payloadArg(0) )
+ 				delay 100  //give time to remove  the object payloadArg(1) TODO: request?
+ 				forward basicrobot -m cmd : cmd(h)
+ 				forward detectorbox -m updateBottle : updateBottle(1)
+ 				println("Bottle removed!")
+    		} else{
+ 				forward basicrobot -m cmd : cmd(h)   		
+ 				println("Stop for safety, obstacle not bottle!")	
+ 			} 
+		}
+		["IsBottle = false"] 
+   	}
+	Goto work 
+}
+</pre>
+</td>
+<td>
+<pre>
+QActor detectorbox context ctxWroom{
+ 	State s0 initial{ println("detectorBox starts")}
+ 	Goto activateResource 
+	State activateResource{  
+	   run kotlincode.resServer.init(myself)
+	   run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+ 	   run kotlincode.resourceObserver.init("coap://127.0.0.1:5683","wroom/detectorBox")
+	}
+	Goto work 
+	State work{}
+	Transition t0
+		whenMsg updateBottle -> updateBottleResource
+  	State updateBottleResource{
+		onMsg( updateBottle : updateBottle(X)){			
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
+		}   
+	}
+  	Goto work
+ }
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+<h3>The Effort/Resources</h3>
+<h4>Detector and Detector Box development (Maicol)</h4>
+Thanks to the already developed and tested basicrobot and the features provided by the QAK model, the detector is just a component that implements the logic to be delegated to the basicrobot.<br/>
+A time of 1 hour is estimated.
+
+
+<h3>The ProductBacklog</h3>
+<strong>DETECTOR</strong>: the robot mind that delegate to the basicrobot the behaviour to do to collect the bottle. <br/>
+<strong>BASIC ROBOT</strong>: extension with a new command to collect the bottle. <br/>
+<strong>VIRTUAL ROBOT</strong>: extension to permit to show a bottle and collect it. (This virtual space is used for testing)<br/>
+<strong>FRONTEND</strong>: Button to comunicate an explore message and a label to show the bottle inside the detectorBox.
+
+<h2>Test plans</h2> 
+<div class="remark">
+<ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
+</div>
+
+<h2>Project</h2> 
+
+<h2>Testing</h2> 
+<div class="remark">
+<ks>GOAL</ks>: complete the <k>functional TestPlans</k> according to the project code and execute them.
+</div>
+
+<h2>Deployment</h2> 
+
+<h2>Maintenance</h2> 
+
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+</td>
+<td></td>
+</tr>
+</table>
+	      	
+<br/><br/> 	
+</div>  
+
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+By studentName email: student@studio.unibo.it  
+<img src="./img/emiglio.png" alt="mbot" width="8%" height="8%">
+</div> 
+</body>
+</html>
