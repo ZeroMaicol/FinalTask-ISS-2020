@@ -36,7 +36,7 @@ hr {
     background-color: transparent;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
     color: #242424;
     clear: left;
     font: 100% Tahoma, Helvetica, Arial, sans-serif;
@@ -63,8 +63,7 @@ h3 {
 }
 h4 {
     background-color: #99ffcc;
-    font-size: 110%;
-	width: 750px;
+    font-size: 90%;
 }
 #i {
     color: #ff1010;
@@ -183,6 +182,33 @@ The system must be able to accept the following commands sent by the smart-phone
 As previously described the software house already owns a basicrobot capable of basic commands that are exploitable to make this system. <br/>
 The detector will be a QActor defined with the meta-model QAK, that extends the capabilities provided by the basicrobot. <br/>
 <h4>First Prototype</h4>
+
+
+
+
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<pre>
+System wroom
+mqttBroker "localhost" : 1883  
+
+Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt  
+Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] +mqtt     
+
+ExternalQActor basicrobot context ctxBasicRobot   
+    
+QActor detector context ctxWroom{
+	State s0 initial{
+		println("detector starting...")
+		//TODO
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
 <h4>Functional TestPlan (Maicol)</h4>
 <strong>Collect</strong>: The detector, positioned in an empty room with no obstacle, is able to move towards a bottle positioned in front of it and collect it.<br/>
 
@@ -215,6 +241,16 @@ The meta-model QAK provides the possibility of 3 different communication models:
 In the scenario of the interaction between the detector and the supervisor, after discussing with the client, it was concluded that a request response model is required. <br/>
 The client explained that the detector must respond to the supervisor commands, but this will be further discussed in next SPRINT, for now what is decided to implement is a simple ACK response.<br/>
 
+<h4> Application Message </h4>
+A class Application message is provided within the QAK model.<br/>
+This class defines a standard of communication, defining the template of the messages that are to be sent.<br/>
+
+<h4> MQTT </h4>
+The meta-model QAK gives the possibility of using a pattern mediator.<br/>
+This pattern allows communication between different parts of the system, without the need of knowing 
+the name of the components that you need to communicate with.<br/>
+In particular, what the meta-model provides, is the possibiliy of using an MQTT broker.
+
 <h3>The DetectorBox problematic (Detector) (Maicol)</h3>
 To adopt a divide and conquer strategy the DetectorBox is an entity separated from the detector.<br/>
 As a consequence the Detector Box is a QActor in the same context as the detector, that tracks the bottle that the detector has collected.
@@ -233,7 +269,7 @@ object resServer{
 		fun init(owner: ActorBasic){
 			val server = CoapServer();
 			server.add( 
-				 resWroom(owner,  "wroom").add(	//robot
+				 resWroom(owner,  "wroom").add(	
 					 resDetectorBox(owner, "detectorBox"))
 			)
 			server.start();			
@@ -257,7 +293,7 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 		println("resource $name  | created  " );		
 	}
 	override fun handleGET( exchange : CoapExchange ) {
-		exchange.respond( "$bottles" )  // moving=$moving" , $pos dir($direction)
+		exchange.respond( "$bottles" )
 	}
 	override fun handlePUT( exchange : CoapExchange) {
 		val msg = exchange.getRequestText()
@@ -354,17 +390,17 @@ QActor detectorbox context ctxWroom{
 </tr>
 </tbody></table>
 
-<h3>The Effort/Resources</h3>
-<h4>Detector and Detector Box development (Maicol)</h4>
-Thanks to the already developed and tested basicrobot and the features provided by the QAK model, the detector is just a component that implements the logic to be delegated to the basicrobot.<br/>
-A time of 1 hour is estimated.
-
 
 <h3>The ProductBacklog</h3>
 <strong>DETECTOR</strong>: the robot mind that delegate to the basicrobot the behaviour to do to collect the bottle. <br/>
 <strong>BASIC ROBOT</strong>: extension with a new command to collect the bottle. <br/>
 <strong>VIRTUAL ROBOT</strong>: extension to permit to show a bottle and collect it. (This virtual space is used for testing)<br/>
 <strong>FRONTEND</strong>: Button to comunicate an explore message and a label to show the bottle inside the detectorBox.
+
+<h3>The Effort/Resources</h3>
+<h4>Detector and Detector Box development (Maicol)</h4>
+Thanks to the already developed and tested basicrobot and the features provided by the QAK model, the detector is just a component that implements the logic to be delegated to the basicrobot.<br/>
+A time of 1 hour is estimated.
 
 <h2>Test plans</h2> 
 <div class="remark">
@@ -379,7 +415,21 @@ A time of 1 hour is estimated.
 </div>
 
 <h2>Deployment</h2> 
-
+<h3>Detector and BasicRobot (Maicol)</h3> 
+<ol>
+<li>Edit the generated file <tt>build.gradle</tt> as follows: 
+<ul>
+ <li><b>uncomment</b>: id 'application' </li>
+ <li><b>uncomment</b>: mainClassName = 'it.unibo.TODOKt'</li>
+ <li><b>uncomment</b>: the jar. </li>
+</ul>
+<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot and <tt>'it.unibo.ctxWroom.MainCtxWroomKt'</tt> for the Detector.</li>
+<li>Run <pre> gradle build eclipse</pre> </li>
+<li>Unzip (somewhere) the file <tt>it.unibo.project_name\build\distributions\it.unibo.project_name-1.0.zip</tt> where "project_name" depends on the project</li>
+<li>Copy into the <tt>bin</tt> directory all the configurations file <kc>name_file.pl</kc>, for example <kc>sysRules.pl</kc> </li>
+<li>Edit <kc>nameConfig.pl</kc> to denote the concrete robot to be used</li>
+<li>Execute <k>it.unibo.project_name.bat</k></li>
+</ol>
 <h2>Maintenance</h2> 
 
 <table style="width:100%" border="1">
