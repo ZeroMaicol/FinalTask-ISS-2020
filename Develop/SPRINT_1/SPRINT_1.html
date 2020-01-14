@@ -169,7 +169,47 @@ The system must be able to accept the following commands sent by the smart-phone
 <i>ii)</i> define a first working prototype (and a proper set of <k>functional TestPlan</k>) as a formal model of the requirements.
 </div>
 <h3>Basicrobot</h3>
-<h4>The meta-model QAK</h4>
+<h4>The QAK model</h4>
+Since we have to design a heterogeneous distributed system, and since the technology to implement the robot is not defined in the requirements, it is necessary to follow a technology-independent approach.
+<br/>
+The software house already has a language developed ad hoc to solve the situation, the "qak" formalism, that is a meta-model represented in textual form used to expressing the structure, the interaction and the behavior of the software system. The meta-model "qak" defines in its conceptual space, the components of the software system as actors capable of exchanging messages of three types: dispatch, request, event.
+<h4>The basicrobot.qak</h4>
+The software house already has the code "basicrobot.qak" which already manages the situation to pilot a robot. The basicrobot actor receives the movement commands from the "detector" actor (that represents the robot's mind) and forwards them to the implementation of the robot that will execute them.
+<pre>
+	State work{ 
+		println("basicrobot waiting ... ")
+	}
+	Transition t0 
+			whenMsg cmd          -> handleCmd
+			whenEvent userCmd    -> handleUserCmd
+			whenEvent obstacle   -> handleObstacle
+</pre>
+To do this, the basicrobot actor needs to delegate the transmission to another qak actor called "robotadapter" (which is a CodedQActor coded entirely in kotlin) with the specific function of using the proper configuration to interface with the relative implementation of the robot, that can be virtual or physical.
+<pre>
+	State handleCmd {
+		onMsg( cmd : cmd(X) ){
+ 			forward robotadapter -m cmd : cmd( $payloadArg(0 ) )
+		}
+	}
+	Goto work
+</pre>
+The basicrobot also has the functionality of receiving "obstacle" events, following receipt of this event the robot enters a stop state and then switches to another state in which it moves away from the detected obstacle in order to be in a safety state.
+<pre>
+	State handleObstacle{
+		forward robotadapter -m cmd : cmd( h )
+		println("	basicrobot | stops (for safety) since  obstacle  ")
+ 	}
+ 	Goto movefarFromObstacle
+
+	State movefarFromObstacle{
+		println("	basicrobot | going back (to avoid event-generation) ")
+ 		forward robotadapter -m cmd : cmd( s )
+		delay 100
+		forward robotadapter -m cmd : cmd( h )
+	}
+	Goto work	
+</pre>
+<br/>
 
 
 <h3>Detector (Maicol)</h3>
@@ -403,9 +443,32 @@ Thanks to the already developed and tested basicrobot and the features provided 
 A time of 1 hour is estimated.
 
 <h2>Test plans</h2> 
-<div class="remark">
-<ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
-</div>
+The results to be achieved in this first sprint can be summarized through a single simple final test. This test involves the positioning of the robot and a plastic bottle inside a room. The robot must reach and collect the bottle just by moving forward with the assumption that there are no obstacles between the robot and the bottle.
+<pre>
+@Test
+public void sprint_1_Test() {
+	CoapClient readerClient = new CoapClient("coap://localhost:5683/wroom/detectorBox");
+	assertTrue("there's no bottle in detector box", readerClient.get().getResponseText().equals("0"));
+	
+	try {
+		MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+		MqttConnectOptions connOpts = new MqttConnectOptions();
+		connOpts.setCleanSession(true);
+		publisherClient.connect(connOpts);
+		assertTrue("client is connected?", publisherClient.isConnected());
+		MqttMessage message = new MqttMessage(msgContent.getBytes());
+		message.setQos(qos);
+		publisherClient.publish(detectorTopic, message); // send the forward command to robot
+		publisherClient.disconnect();
+		publisherClient.close();
+	} catch (MqttException me) {/* handle exception ... */}
+	
+	try {
+		Thread.sleep(5000); // wait for robot reach the bottle ...
+	} catch (InterruptedException e) {/* handle exception ... */}
+	assertTrue("detector has found and collect the bottle in 5 seconds?", readerClient.get().getResponseText().equals("1"));
+}
+</pre>
 
 <h2>Project</h2> 
 
