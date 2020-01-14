@@ -164,10 +164,6 @@ The system must be able to accept the following commands sent by the smart-phone
 </div>
 
 <h2>Requirement analysis</h2>
-<div class="remark">
-<ks>GOAL</ks>: <i>i)</i> clarify the meaning of the <i>names</i> and of the <i>verbs</i> included in the requirement text given by the customer.
-<i>ii)</i> define a first working prototype (and a proper set of <k>functional TestPlan</k>) as a formal model of the requirements.
-</div>
 <h3>Basicrobot (Bondi)</h3>
 <h4>The QAK model</h4>
 Since we have to design a heterogeneous distributed system, and since the technology to implement the robot is not defined in the requirements, it is necessary to follow a technology-independent approach.
@@ -252,26 +248,21 @@ QActor detector context ctxWroom{
 <h4>Functional TestPlan (Maicol)</h4>
 <strong>Collect</strong>: The detector, positioned in an empty room with no obstacle, is able to move towards a bottle positioned in front of it and collect it.<br/>
 
+
+<h3>Supervisor (Christian)</h3>
+<ul>
+<li> <strong> Structure</strong>: The supervisor its an atomic entity with its own control flow.</li>
+<li> <strong> Interaction</strong>: The supervisor must be able to send the defined commands to the system and should be automatically updated with a set of informations.</li> 
+<li> <strong> Behaviour</strong>: The given requirements have no details related to the behaviour of the supervisor.</li> 
+</ul>
+
 <h2>Problem analysis</h2>
-<div class="remark">
-<ks>WARNING</ks>: expressions like <i>'we have chosen to ...'</i>, <i>'I decided ...'</i>, etc. are <k>forbidden</k> here. <br/>
-Rather, this section should include sentences like
-<b><i>'this (aspect of the) problem implies that ...'</i></b> or <i><b>'the usage of this (legacy) component requires that ...'</i></b>, etc.
-<br/><br/>
-<ks>GOAL</ks>: 
-<i>i)</i>define the <k>logical architecture</k> of the system  as an executable model
-<i>ii)</i>give a <k>quantitative measure of the effort/resources</k> necessary to build the system 
-<i>iii)</i> define a (first) <k>product backlog</k>.
-</div>
-
-<h3>Raccogli problematic (Basicrobot)</h3>
-
 <h3>Moving problematic (Detector) (Maicol)</h3>
 We can assume that the robot is moving in a flat euclidean space.<br/>
 The movement of the detector towards the bottle is already implemented in the set of basic commands provided by the basicrobot.<br/>
 In particular is defined by the command 'w' that the detector will delegate to the basicrobot.
 
-<h3>Communication problematic (Detector) (Maicol)</h3>
+<h3>Communication problematic (Maicol, Christian)</h3>
 The meta-model QAK provides the possibility of 3 different communication models: 
 <ul>
 <li> <strong>Fire and Forget</strong>: Simple communication but the components of the system must know each other. </li>
@@ -430,6 +421,37 @@ QActor detectorbox context ctxWroom{
 </tr>
 </tbody></table>
 
+<table><tbody>
+<tr>
+<td style="width:50%" >
+<h3>A Web-frontend server (in Node)</h3>
+<img src="./img/smartrobotfrontendcoap.png" alt="smartrobotfrontendcoap.png" width="100%"  />
+<m>
+See the project  <ks>it.unibo.frontend20</ks>
+</m></td>
+<td>
+ <img src="./img/webpage.png" alt="webpage.png" width="40%"  /> <br/>
+<m>
+The Web-page uses a <ks>socket-io</ks> and is updated by a CoAP client observer written in Node
+that sends the received information on the <ks>socket-io</ks>.
+<br/><br/>
+It could be updated also by a mqtt support, but the usage of the CoAP resource will exclude the knowledge of
+any implementation detail (e.g. the topic <tt>unibo/qak/events</tt>).
+<!--
+as follows:
+<ol>
+<li>the frontend server mqtt-subscribes on the topic <tt>unibo/qak/events</tt></li>
+<li>when the mqtt support receives an event, it sends information on the <ks>socket-io</ks> </li>
+</ol>
+
+It could use also a CoAP client observer written in Node.
+-->
+ </m>
+
+ 
+ </td>
+</tr>
+</tbody></table>
 
 <h3>The ProductBacklog</h3>
 <strong>DETECTOR</strong>: the robot mind that delegate to the basicrobot the behaviour to do to collect the bottle. <br/>
@@ -441,6 +463,9 @@ QActor detectorbox context ctxWroom{
 <h4>Detector and Detector Box development (Maicol)</h4>
 Thanks to the already developed and tested basicrobot and the features provided by the QAK model, the detector is just a component that implements the logic to be delegated to the basicrobot.<br/>
 A time of 1 hour is estimated.
+
+<h4>Front-end (Christian)</h4>
+Since it was already developed, we use a stripped down version of the front-end. 1 man hour is estimated for the job.
 
 <h2>Test plans (Bondi)</h2> 
 The results to be achieved in this first sprint can be summarized through a single simple final test. This test involves the positioning of the robot and a plastic bottle inside a room. The robot must reach and collect the bottle just by moving forward with the assumption that there are no obstacles between the robot and the bottle.
@@ -472,10 +497,7 @@ public void sprint_1_Test() {
 
 <h2>Project</h2> 
 
-<h2>Testing</h2> 
-<div class="remark">
-<ks>GOAL</ks>: complete the <k>functional TestPlans</k> according to the project code and execute them.
-</div>
+<h2>Testing</h2>
 
 <h2>Deployment</h2> 
 <h3>Detector and BasicRobot (Maicol)</h3> 
@@ -493,6 +515,16 @@ public void sprint_1_Test() {
 <li>Edit <kc>nameConfig.pl</kc> to denote the concrete robot to be used</li>
 <li>Execute <k>it.unibo.project_name.bat</k></li>
 </ol>
+
+
+<h3>Front-end (Christian)</h3> 
+<ul>
+<li>From the terminal, get into it.unibo.frontend20/nodeCode/frontend folder. </li>
+<li>Execute <k>npm install</k> to download the required dependencies. </li>
+<li>Execute <k>startFrontEnd.bat</k> to launch the node server.</li>
+<li>Open a browser on <tt>http://localhost:8080</tt></li>
+</ul>
+
 <h2>Maintenance</h2> 
 
 <table style="width:100%" border="1">
