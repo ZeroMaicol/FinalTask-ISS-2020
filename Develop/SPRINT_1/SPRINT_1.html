@@ -420,11 +420,10 @@ QActor detectorbox context ctxWroom{
 </td>
 </tr>
 </tbody></table>
-
+<h3>A Web-frontend server (in Node) (Christian)</h3>
 <table><tbody>
 <tr>
 <td style="width:50%" >
-<h3>A Web-frontend server (in Node)</h3>
 <img src="./img/smartrobotfrontendcoap.png" alt="smartrobotfrontendcoap.png" width="100%"  />
 <m>
 See the project  <ks>it.unibo.frontend20</ks>
@@ -437,18 +436,7 @@ that sends the received information on the <ks>socket-io</ks>.
 <br/><br/>
 It could be updated also by a mqtt support, but the usage of the CoAP resource will exclude the knowledge of
 any implementation detail (e.g. the topic <tt>unibo/qak/events</tt>).
-<!--
-as follows:
-<ol>
-<li>the frontend server mqtt-subscribes on the topic <tt>unibo/qak/events</tt></li>
-<li>when the mqtt support receives an event, it sends information on the <ks>socket-io</ks> </li>
-</ol>
-
-It could use also a CoAP client observer written in Node.
--->
  </m>
-
- 
  </td>
 </tr>
 </tbody></table>
