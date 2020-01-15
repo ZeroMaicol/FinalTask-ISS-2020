@@ -208,22 +208,46 @@ This task performs the following actions:
 	</ul>
 <h4>Terminate the work</h4>
 This task performs the following actions:
-	<ul>
+<ul>
 	<li>if the <em>detectorBox</em> is empty, return to the <em>discoveryHome</em>;
 	otherwise, execute the task <i>Empty the detectorBox</i> and then return  to the <em>discoveryHome</em></li>	
-	</ul>
+</ul>
+
+<h3>Plastic Box</h3>
+<ul>
+<li> <strong>Structure</strong>: The plastic box its an atomic entity with its own control flow.</li>
+<li> <strong>Interaction</strong>: The given requirements have no details related to the behaviour of the plastic box.</li>
+<li> <strong> Behaviour</strong>: The collector works as a smart device, able to expose and update - via CoAP - its content.</li>
+</ul>
+
+<h3>Wroom</h3>
+The wroom is not an active entity but the context where the components are concentrated.
 
 <h2>Problem analysis</h2>
-<div class="remark">
-<ks>WARNING</ks>: expressions like <i>'we have chosen to ...'</i>, <i>'I decided ...'</i>, etc. are <k>forbidden</k> here. <br/>
-Rather, this section should include sentences like
-<b><i>'this (aspect of the) problem implies that ...'</i></b> or <i><b>'the usage of this (legacy) component requires that ...'</i></b>, etc.
-<br/><br/>
-<ks>GOAL</ks>: 
-<i>i)</i>define the <k>logical architecture</k> of the system  as an executable model
-<i>ii)</i>give a <k>quantitative measure of the effort/resources</k> necessary to build the system 
-<i>iii)</i> define a (first) <k>product backlog</k>.
-</div>
+
+<h3>The room problematic</h3>
+The room it is supposed to be a flat euclidean space.<br/>
+The first thing to notice is that in the room there could be objects, or it could be empty.<br/>
+<h4>The planner</h4>
+The softwarehouse is already provided of a tool called planner.<br/>
+This tool is able to produce a map and to make plans on it.<br/>
+Every time the robot makes a move, the plan is calculated and the map is produced with every step.<br/>
+<h4>The map</h4>
+The map produced its based on the robot measure: every robot step its a new cell on the map, this cell is filled with a 1 or a 0 depending on the situation.<br/>
+If the robot can move to that cell the map shows a 1, otherwise a 0, defining an obstacle.<br/>
+This process of mapping could be automatized if the room and the objects in it are static, otherwise the process must be executed every time the detector explores the room.
+<h4>The room problematic final take</h4>
+Having at disposal this tool, it doesn't matter if the room has objects or not, or if they are moving or not, the map can be calculated every time the robot explores it.
+
+<h4>The requirement obstacle</h4>
+The robot is able to move, as a consequence, a new problematic arise: the robot, when moving forward, should be able to stop in the presence of an obstacle.<br/>
+The stop should be forced below a certain threshold distance from the obstacle.<br/>
+This is already possible and already implemented inside the basicrobot.qak.<br/>
+When using a real robot a sensor is needed to notify the basicrobot of an obstacle.
+
+<h3>The plastic box problematic</h3>
+When the detector has to empty the detectorBox, it could happen that the plasticBox hasn't already been discovered.<br/>
+To prevent this kind of situation, it is assumed that the plasticBox is always situated in a known place of the room.<br/>
 
 <h2>Test plans</h2> 
 <div class="remark">
