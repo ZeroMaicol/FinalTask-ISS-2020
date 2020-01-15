@@ -1,0 +1,96 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak.
+ * 
+ * ================================================================
+ */ 
+System wroom
+
+mqttBroker "localhost" : 1883  
+ 
+Dispatch cmd  : cmd(X)
+Dispatch updateBottle  : updateBottle(X)
+Request  explore   :  explore(X)
+Reply    exploreAck  :  exploreAck(V)  
+Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
+
+Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt  
+Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] //+mqtt      
+
+ExternalQActor basicrobot context ctxBasicRobot   
+    
+QActor detector context ctxWroom{
+[" 
+var IsBottle     = false
+"]  	
+	State s0 initial{
+		println("detector starting...")
+		delay 2000
+ 		println("detector started!")	
+	}
+	Goto work
+	
+	State work{} 
+	Transition t0 
+ 			whenRequest explore -> doExplore
+  			
+
+  	State doExplore{
+  		printCurrentMessage
+  		replyTo explore with exploreAck : exploreAck(OK)
+  		forward basicrobot -m cmd : cmd(w)
+  	}
+  	Transition t1
+  		whenEvent virtualobstacle -> checkObstacle
+  		
+  	
+	State checkObstacle{ //REQUIREMENT req-onestep-time, req-onestep-info
+		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
+			["  
+			  IsBottle = payloadArg(0).startsWith(\"bottle\")
+			"] 			
+ 			if "IsBottle" {  //remove the bottle
+ 				forward basicrobot -m cmd : cmd( $payloadArg(0) )
+ 				delay 100  //give time to remove  the object payloadArg(1) TODO: request?
+ 				forward basicrobot -m cmd : cmd(h)
+ 				forward detectorbox -m updateBottle : updateBottle(1)
+ 				println("Bottle removed!")
+    		} else{
+ 				forward basicrobot -m cmd : cmd(h)   		
+ 				println("Stop for safety, obstacle not bottle!")	
+ 			} 
+		}
+		["IsBottle = false"] 
+   	}
+	Goto work 
+  
+}
+
+QActor detectorbox context ctxWroom{
+ 	State s0 initial{
+ 		println("detectorBox starts")
+ 	}
+ 	Goto activateResource 
+	
+	State activateResource{  
+	   run kotlincode.resServer.init(myself)
+	   run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+ 	   run kotlincode.resourceObserver.init("coap://127.0.0.1:5683","wroom/detectorBox")
+	}
+	Goto work 
+	
+	State work{}
+	Transition t0
+		whenMsg updateBottle -> updateBottleResource
+	
+  	State updateBottleResource{
+		onMsg( updateBottle : updateBottle(X)){			
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
+		}   
+	}
+  	Goto work
+
+ }
+ 
