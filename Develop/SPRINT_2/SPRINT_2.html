@@ -249,6 +249,18 @@ When using a real robot a sensor is needed to notify the basicrobot of an obstac
 When the detector has to empty the detectorBox, it could happen that the plasticBox hasn't already been discovered.<br/>
 To prevent this kind of situation, it is assumed that the plasticBox is always situated in a known place of the room.<br/>
 
+<h3>The ProductBacklog</h3>
+<strong>TASK EXPLORE THE ROOM</strong>: implement this task.<br/>
+<strong>TASK EMPTY THE DETECTORBOX</strong>: implement this task.<br/>
+<strong>PLASTICBOX</strong>: implement the plasticBox qactor.<br/>
+<strong>FRONTEND</strong>: add 2 new buttons for suspend and terminate.<br/>
+<strong>TASK GO TO HOME</strong>: implement this task.<br/>
+<strong>TASK TERMINATE THE WORK</strong>: implement this task.<br/>
+<strong>RESOURCES</strong>: implement the new resources. <br/>
+<strong>TESTPLANS</strong>: prepare functional test plans.<br/>
+<h3>The Effort/Resources</h3>
+
+
 <h2>Test plans</h2> 
 <div class="remark">
 <ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
@@ -262,7 +274,21 @@ To prevent this kind of situation, it is assumed that the plasticBox is always s
 </div>
 
 <h2>Deployment</h2> 
-
+<h3>Detector and BasicRobot</h3> 
+<ol>
+<li>Edit the generated file <tt>build.gradle</tt> as follows: 
+<ul>
+ <li><b>uncomment</b>: id 'application' </li>
+ <li><b>uncomment</b>: mainClassName = 'it.unibo.TODOKt'</li>
+ <li><b>uncomment</b>: the jar. </li>
+</ul>
+<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot and <tt>'it.unibo.ctxWroom.MainCtxWroomKt'</tt> for the Detector.</li>
+<li>Run <pre> gradle build eclipse</pre> </li>
+<li>Unzip (somewhere) the file <tt>it.unibo.project_name\build\distributions\it.unibo.project_name-1.0.zip</tt> where "project_name" depends on the project</li>
+<li>Copy into the <tt>bin</tt> directory all the configurations file <kc>name_file.pl</kc>, for example <kc>sysRules.pl</kc> </li>
+<li>Edit <kc>nameConfig.pl</kc> to denote the concrete robot to be used</li>
+<li>Execute <k>it.unibo.project_name.bat</k></li>
+</ol>
 <h2>Maintenance</h2> 
 
 <table style="width:100%" border="1">
