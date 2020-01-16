@@ -155,7 +155,6 @@ table, th, td {
 <div class="body"> 
 <h2>Requirements</h2>
 <div class="req">
-
 Design and build a software system where a <em>detector</em>, equipped with a local container (<em>detectorBox</em>), is able to collect a plastic bottle positioned in front of it.<br/>
 The system must be able to accept the following commands sent by the smart-phone of the <em>supervisor</em>:
 <ul>
@@ -164,6 +163,12 @@ The system must be able to accept the following commands sent by the smart-phone
 </div>
 
 <h2>Requirement analysis</h2>
+
+<h4>Functional TestPlan (Maicol)</h4>
+<strong>Collect</strong>: The detector, positioned in an empty room with no obstacle, is able to move towards a bottle positioned in front of it and collect it.<br/>
+
+<h2>Problem analysis</h2>
+
 <h3>Basicrobot (Bondi)</h3>
 <h4>The QAK model</h4>
 Since we have to design a heterogeneous distributed system, and since the technology to implement the robot is not defined in the requirements, it is necessary to follow a technology-independent approach.
@@ -208,55 +213,7 @@ The basicrobot also has the functionality of receiving "obstacle" events, follow
 <br/>
 
 
-<h3>Detector (Maicol)</h3>
-<ul>
-<li> <strong> Structure</strong>: The detector could be composed by different components but at this level its not relevant.
-				Its an atomic entity with its own control flow, moreover, the detector is equipped with a detector box, a local container.</li>
-<li> <strong> Interaction</strong>: The detector must be able to accept the command <bc>explore</bc> sent by the smart-phone of the supervisor.</li> 
-<li> <strong> Behaviour</strong>: The detector is able to collect a plastic bottle positioned in front of it. </li> 
-</ul>
-As previously described the software house already owns a basicrobot capable of basic commands that are exploitable to make this system. <br/>
-The detector will be a QActor defined with the meta-model QAK, that extends the capabilities provided by the basicrobot. <br/>
-<h4>First Prototype</h4>
 
-
-
-
-<table style="width:100%" border="1">
-<tbody><tr>
-<td style="width:50%">
-<pre>
-System wroom
-mqttBroker "localhost" : 1883  
-
-Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt  
-Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] +mqtt     
-
-ExternalQActor basicrobot context ctxBasicRobot   
-    
-QActor detector context ctxWroom{
-	State s0 initial{
-		println("detector starting...")
-		//TODO
-	}
-}
-</pre>
-</td>
-</tr>
-</tbody></table>
-
-<h4>Functional TestPlan (Maicol)</h4>
-<strong>Collect</strong>: The detector, positioned in an empty room with no obstacle, is able to move towards a bottle positioned in front of it and collect it.<br/>
-
-
-<h3>Supervisor (Christian)</h3>
-<ul>
-<li> <strong> Structure</strong>: The supervisor its an atomic entity with its own control flow.</li>
-<li> <strong> Interaction</strong>: The supervisor must be able to send the defined commands to the system and should be automatically updated with a set of informations.</li> 
-<li> <strong> Behaviour</strong>: The given requirements have no details related to the behaviour of the supervisor.</li> 
-</ul>
-
-<h2>Problem analysis</h2>
 <h3>Moving problematic (Detector) (Maicol)</h3>
 We can assume that the robot is moving in a flat euclidean space.<br/>
 The movement of the detector towards the bottle is already implemented in the set of basic commands provided by the basicrobot.<br/>

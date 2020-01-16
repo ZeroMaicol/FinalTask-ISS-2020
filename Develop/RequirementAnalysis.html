@@ -190,9 +190,9 @@ Moreover, the <i>smart-phone</i> of the <em>supervisor</em> should be automatica
 
 
 <h4>Wroom</h4>
-After a discussion with the client, the wroom is defined as a flat euclidean space of rectangular shape.<br/> 
+After a discussion with the client, the wroom is defined as a flat euclidean space of rectangular shape with width w and height h.<br/> 
 Moreover, the room can contain plastic bottles and other objects.<br/>
-It can be formalized as follow:<br/> 
+An example given by the client:<br/> 
 <img src="img/roomLayout20.png" alt="wroom" width="400px">
 
 
@@ -210,7 +210,7 @@ It can be formalized as follow:
 <h4>Detector</h4>
 After a discussion with the client, the detector is determined to be a specialized robot able to execute task if a command is sent by a supervisor through a smartphone.<br/>
 Moreover, the detector is equipped with a container called detectorBox that contains the bottles collected.<br/>
-The detector and the task that exectues can be formalized as follow:<br/>
+The detector and the task that executes can be formalized as follow:<br/>
 <ul>
 <li> <strong> Structure</strong>: The detector could be composed by different components but at this level its not relevant.
 				Its an atomic entity with its own control flow, moreover, the detector is equipped with a detector box, a local container.</li>
@@ -225,7 +225,7 @@ The behaviour of the detector is managed by the supervisor, which can tell the r
 	<li>if the detected object is made of plastic, put it (if there is space) in the <em>detectorBox</em>;
 	if the <em>detectorBox</em> is full or if the room has been completely explored, execute the task <i>Empty the detectorBox</i>. </li>
 	</ul>
-	After discussing with the client, in a <strong>sistematic way</strong> is determined to be a zigzag motion.<br/>
+	After discussing with the client, in a <strong>sistematic way</strong> is determined to be a specific algorithm of some sort, that makes sure that every part of the wroom is explored.<br/>
 	<br/>
 </li>
 
@@ -264,27 +264,21 @@ The behaviour of the detector is managed by the supervisor, which can tell the r
 </li> 
 </ul>
 
-<h4>Command</h4>
-After a discussion with the client, a command is determined to be an entity that, as a representation, has a string. <br/>
-The syntax of this string is known: explore, suspend, terminate.
+<h4>Accepting a Command</h4>
+After a discussion with the client, a command is determined to be an entity that as a representation has a string. <br/>
+The syntax of this string is known: explore, suspend, terminate.<br/>
+After a discussion with the client, it isn't important who receives the command and how, but the detector must execute the related task. <br/>
 
 <h4>Supervisor</h4>
-After discussing with the client, the superviser is determined to be the entity that sends commands to the detector through a smart-phone.<br/>
-It can be formalized as follow:
-<ul>
-<li> <strong> Structure</strong>: The supervisor its an atomic entity with its own control flow.</li>
-<li> <strong> Interaction</strong>: The supervisor must be able to send the defined commands to the system and should be automatically updated with a set of informations.</li> 
-<li> <strong> Behaviour</strong>: The given requirements have no details related to the behaviour of the supervisor.</li> 
-</ul>
-
-//TODO BEHAVIOUR SUPERVISOR
+The supervisor is the entity that uses the smart-phone to interact with the system.<br/> 
+After discussing with the client, how the supervisor uses the smart-phone is not that important as long as it's simple and intuitive. 
 
 <h4>Sensor Agent</h4>
 After discussing with the client we defined the word 'agent' as an entity equipped with a sensor.
 <ul>
 <li> <strong>Structure</strong>: The 'agent' its an atomic entity with its own control flow equipped with an air quality sensor.</li>
-<li> <strong>Interaction</strong>: The 'agent' its able to send the command suspend to the robot.</li>
-<li> <strong> Behaviour</strong>: The 'agent' is able to detect the state-TVOCHigh from the sensor.</li>
+<li> <strong>Interaction</strong>: The 'agent' its able to send in automatic way the command suspend to the robot.</li>
+<li> <strong> Behaviour</strong>: The 'agent' is able to detect the sensor values.</li>
 </ul>
 The state <strong>TVOCHigh</strong> is determined to be an alarm state that is present when the sensor detects a value that is over a certain threshold.
 
