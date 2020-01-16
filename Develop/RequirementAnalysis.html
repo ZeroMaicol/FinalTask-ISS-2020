@@ -36,7 +36,7 @@ hr {
     background-color: transparent;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
     color: #242424;
     clear: left;
     font: 100% Tahoma, Helvetica, Arial, sans-serif;
@@ -54,17 +54,16 @@ h1 {
 
 h2 {
     background-color: #d9fbff;
-    font-size: 110%;
+    font-size: 130%;
 }
 
 h3 {
 	background-color: #e6ccff;
-    font-size: 80%;
+    font-size: 120%;
 }
 h4 {
     background-color: #99ffcc;
-    font-size: 100%;
-	width: 750px;
+    font-size: 90%;
 }
 #i {
     color: #ff1010;
@@ -140,7 +139,7 @@ table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
 }         
-   
+    
   -->
 </style>
     
@@ -189,16 +188,29 @@ Moreover, the <i>smart-phone</i> of the <em>supervisor</em> should be automatica
 <h2>Requirement analysis</h2>
 <h3>Naming clarifications</h3>
 
-After a discussion with the client it was decided that the analyst will be responsible of all the decisions related to behaviours and interactions that are not well defined in the requirements.
+
+<h4>Wroom</h4>
+After a discussion with the client, the wroom is defined as a flat euclidean space of rectangular shape.<br/> 
+Moreover, the room can contain plastic bottles and other objects.<br/>
+It can be formalized as follow:<br/> 
+<img src="img/roomLayout20.png" alt="wroom" width="400px">
+
 
 <h4>Plastic Box</h4>
+After a discussion with the client, the plastic box is determined to be a recipient of plastic bottles situated in a determined corner of the room. <br/>
+It can be formalized as follow:
 <ul>
 <li> <strong>Structure</strong>: The plastic box its an atomic entity with its own control flow.</li>
 <li> <strong>Interaction</strong>: The given requirements have no details related to the behaviour of the plastic box.</li>
 <li> <strong> Behaviour</strong>: The collector works as a smart device, able to expose and update - via CoAP - its content.</li>
 </ul>
 
+//TODO INTERACTION
+
 <h4>Detector</h4>
+After a discussion with the client, the detector is determined to be a specialized robot able to execute task if a command is sent by a supervisor through a smartphone.<br/>
+Moreover, the detector is equipped with a container called detectorBox that contains the bottles collected.<br/>
+The detector and the task that exectues can be formalized as follow:<br/>
 <ul>
 <li> <strong> Structure</strong>: The detector could be composed by different components but at this level its not relevant.
 				Its an atomic entity with its own control flow, moreover, the detector is equipped with a detector box, a local container.</li>
@@ -213,7 +225,8 @@ The behaviour of the detector is managed by the supervisor, which can tell the r
 	<li>if the detected object is made of plastic, put it (if there is space) in the <em>detectorBox</em>;
 	if the <em>detectorBox</em> is full or if the room has been completely explored, execute the task <i>Empty the detectorBox</i>. </li>
 	</ul>
- <br> 
+	After discussing with the client, in a <strong>sistematic way</strong> is determined to be a zigzag motion.<br/>
+	<br/>
 </li>
 
 <li><i>Empty the detectorBox</i>. This task performs the following actions:
@@ -226,14 +239,18 @@ The behaviour of the detector is managed by the supervisor, which can tell the r
 	and return to the task <i>Explore the room</i>, restarting from the saved <em>beforeEmptyPos</em> .
 	</li>
 	</ul>
-<br>
+	After discussing with the client, the <strong>position</strong> of the robot is determined to be the coordinates (x,y) of the robot.
+<br/>
+<br/>
 </li> 
 
 <li><i>Go to home</i>. This task performs the following actions:
 	<ul>
 	<li>return the robot to its <em>discoveryHome</em></li>	
 	</ul>
-<br>
+	After discussing with the client, the <strong>discoveryHome</strong> is determined to be a space where the detector is situated when is not exploring.<br/>
+	It is situated in a known corner of the room.<br/>
+<br/>
 </li>
 
 <li><i>Terminate the work</i>. This task performs the following actions:
@@ -247,16 +264,20 @@ The behaviour of the detector is managed by the supervisor, which can tell the r
 </li> 
 </ul>
 
+<h4>Command</h4>
+After a discussion with the client, a command is determined to be an entity that, as a representation, has a string. <br/>
+The syntax of this string is known: explore, suspend, terminate.
+
 <h4>Supervisor</h4>
+After discussing with the client, the superviser is determined to be the entity that sends commands to the detector through a smart-phone.<br/>
+It can be formalized as follow:
 <ul>
 <li> <strong> Structure</strong>: The supervisor its an atomic entity with its own control flow.</li>
 <li> <strong> Interaction</strong>: The supervisor must be able to send the defined commands to the system and should be automatically updated with a set of informations.</li> 
 <li> <strong> Behaviour</strong>: The given requirements have no details related to the behaviour of the supervisor.</li> 
 </ul>
 
-
-<h4>Wroom</h4>
-The wroom is not an active entity but the context where the components are concentrated.
+//TODO BEHAVIOUR SUPERVISOR
 
 <h4>Sensor Agent</h4>
 After discussing with the client we defined the word 'agent' as an entity equipped with a sensor.
@@ -265,8 +286,24 @@ After discussing with the client we defined the word 'agent' as an entity equipp
 <li> <strong>Interaction</strong>: The 'agent' its able to send the command suspend to the robot.</li>
 <li> <strong> Behaviour</strong>: The 'agent' is able to detect the state-TVOCHigh from the sensor.</li>
 </ul>
-</div>  
+The state <strong>TVOCHigh</strong> is determined to be an alarm state that is present when the sensor detects a value that is over a certain threshold.
 
+<h4>Map</h4>
+After a discussion with the client, a map is determined to be a representation of the wroom in coordinates (x,y) that the robot explores in step.
+More in particular, every step covers a cell.<br/>
+It can be formalized as follow: <br/>
+<img src="img/plant0.png" alt="map" width="300px">
+<br/>
+Where "R" is the detector.
+<h3>Functional TestPlan</h3>
+<h4>Explore</h4>
+After discussing with the client, the objective of this test plan is to verify that the detector is able to explore the entirety of the room, as a consequence, the entire map of the room.<br/>
+<ul>
+<li>At the start of the test the detector is situated in the top-left corner of the room.</li>
+<li>At the end of the test the detector must have went through every cell of the map.</li>
+<ul/>
+</div>  
+<br/>
 <div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
 By studentName email: student@studio.unibo.it  
 <img src="./img/emiglio.png" alt="mbot" width="8%" height="8%">
