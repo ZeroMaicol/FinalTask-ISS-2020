@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+
+a:hover {
+    background-color: #cccccc;
+}
+
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>Lab2_2020</title></head>
+    
+<body>
+<div id="top">
+<h1>Lab2_2020 | A basicrobot with step<font size="5"></font> </h1>
+</div>  
+
+<div class="body"> 
+<h2>Introduction</h2>
+This case-study is related to:
+<ul>
+<li>abstraction gap and conceptual spaces</li>
+<li>the design of proactive-reactive components</li>
+<li>the problem of defining a 'priority list' for the requirements and the definition of a product-backlog</li>
+<li>the problem of finding proper subsystems and their related models </li>
+<li>introduce the <i>qak concepts</i> of  
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html#coded" target="web">
+Coded actors</a> and of<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html#external" target="web">
+External actors</a></li>
+</ul>
+
+ 
+<h2>Requirements</h2>
+<div class="req">
+Design and build a software system (<em>basicrobot</em>) that is able to receive via Internet commands (represented 
+in textual form), so that: 
+<ul>
+<li>the <i>basic-commands</i> <k>w | s | h | a | d</k> move a <i>differential drive robot</i> (<em>robot</em>)  respectively
+<k>forward | backward | stop | left | right</k>  (<ks>req-cmd</ks>).  </li>
+<li>the command <k>step</k>  moves the <em>robot</em> forward for a prefixed time (e.g. <tt>2</tt> secs) (<ks>req-step</ks>).</li>
+</ul>
+Moreover, the <em>robot</em> must be always able to react 'immediately' to the <k>stop</k> command, by stopping 
+any ongoing movement (<ks>req-stop</ks>) .
+ 
+</div>	    
+
+<h3>Premise</h3>
+<m>
+We note that:
+<ul>
+<li>the system logically includes two components: the <em>robot</em> and another external component (let us name it <em>caller</em>) 
+that sends commands to the robot via Internet;</li>
+<li>there is no specification about the <em>caller</em>. Thus, we will assume that it will 'adapt' to the interaction rules
+established by the <em>robot</em>. However, we cannot assume that the <em>caller</em> will be coded in the same language used
+to build the software running on the <em>robot</em>; </li>
+<li>there is no specification about the <em>robot</em>. We will assumme here that the customer will provide a proper <k>API</k> to
+use some virtual or real robot; </li>
+</ul>
+Since we are going to write software for a <b>distributed, heterogeneous</b> system, the <i>conceptual space</i> of 'classical' object-oriented
+programming is not the best staring point to talk about the system. Rather, we could use an agent-based or an actor-based
+<i>conceptual space</i>, in which the interaction among components occurs only by means of messages represented as Strings. 
+<br/><br/>
+In the following, we will use the custom 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html" target="web">
+qak metamodel</a> as our (starting) language to denote models of the system at the variuos stages of our development process.
+</m>
+<h2>Requirement analysis</h2>
+
+The key-point here is to understand well and to fix the logical way in which the robot accepts the commands. 
+<br/><br/>
+<hr/>
+<m>
+Since, at these stage,  we aim at capturing <k>what</k> the system has to do,
+we must be - in absence of specific requirements -  totally <b>technology-independent</b> 
+(i.e. we cannot make reference to any concrete technological support for communications on the Internet).
+<br/>
+Thus, we consider appropriate to 'think' about the system by adopting the <ks>conceptual space</ks> of the
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html" target="web">
+qak metamodel</a>, in which the components of a software system are 'actors' able to exchange information as messages of three different (main) types:
+
+<ul>
+<li>dispatch</li>
+<li>request</li>
+<li>event</li>
+</ul>
+</m>
+<hr/>
+
+<kc>After a discussion with the customer</kc>, we can define the logical architecture of the system through the following qak specification: 
+<br/><br/>
+<a href="../modelsOld/requirements/basicrobotreq.txt" target="code">basicrobotreq.qak</a>
+
+<h3>Notes</h3>
+In this model:
+<ul>
+<li>the <em>basicrobot</em> works as a service 
+<!-- sort of <a href="https://en.wikipedia.org/wiki/Microservices" target ="web">Microservice</a> -->
+on the TCP-port <tt>8018</tt>, exploiting the <tt>qak-infrastructure</tt>. 
+This is useful for fast prototyping; however, the final infrastructural support has to be defined later, by the project designer;
+</li>
+<li>each state is associated with a specific, named requirement. This is very useful for <kc>requirement traceability</kc>;</li>
+<li>we exploit the 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.robot2020/userDocs/LabVirtualRobot.html" target="code">
+Virtual Robot</a> available in our company, in order to show a working (<a href="https://en.wikipedia.org/wiki/Mock_object"  target="web">mock</a>) prototype to the customer;</li>
+
+</ul>
+
+Moreover, in this model, the <k>doStep</k> state still under-specified, since the <ks>req-step</ks> seems 'more demanding' than the <ks>req-cmd</ks>.
+In fact, we have  agreed with the customer upon the following requirement priority:
+
+<ol>
+<li><ks>req-cmd</ks> first</li>
+<li><ks>req-step/stop</ks> second</li>
+</ol>
+
+<h1>The requirement  <ks>req-cmd</ks></h1>
+
+<h2>Problem analysis</h2>
+
+From the <i>functional</i> point of view, the <em>basicrobot</em> is a <k>translator</k> of commands expressed in the user-language 
+(<tt>w | s | h | a | d</tt>) into commands expressed in the language of the concrete <em>robot</em> to be used. <br/>
+During the execution of a basic-command, we will assume that the robot is moving on a flat 
+(<a href="https://en.wikipedia.org/wiki/Euclidean_space" target="web">euclidean</a>) space.
+<!--
+During the execution of a command expressed in the <i>user-language</i>, the  <em>basicrobot</em>  
+could hit an <k>obstacle</k> (either fixed or moving). Since no specification is given in the requirements about this problematic,
+at the moment we assume <k>absence of obtacles</k>.-->
+<br/><br/>
+Under these assumptions, we can use the logical model defined in the requirement-analysis phase as it is.<br/><br/>
+
+However, we known that, during the execution of a <i>movement command</i>, the  <em>basicrobot</em>  could hit an <k>obstacle</k> (either fixed or moving).
+Thus, it is important to foresee some obstacle-handling facility in order to avoid damaging of the robot.<br/><br/>
+
+<hr/><m>
+As an important premise before starting the project phase, we observe that the <k>quality of our software product</k> will improve and the
+<k>production process will be better set up</k>, by avoiding any direct technology-dependent reference in the logical model related to the problem.
+Thus, our next step will be focused on the goal of improving the independence of our model from technological details
+</m><hr
+/>
+<h3>Improving the independence from technology using a <k>CodedQActor</k></h3>
+
+As done in <a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.robot2020/userDocs/LabBasicRobot2020.html#project" target="web">
+LabBasicRobot2020.html#project</a>, we can make our model-code less technology-dependent by introducing an object 
+(<a href="../resources/itunibo/robot/robotSupport.kt"  target="code">robotSupport.kt</a>) working as a support that
+provides a <i>factory</i> and as an <i>adapter</i>.
+<br/><br/>
+In this case however, we will introduce such a support as a new actor written in <tt>Kotlin</tt> 
+(see <a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html#coded" target="web">
+Coded actors</a>) that includes (and hides) the 
+<a href="../resources/itunibo/robot/robotSupport.kt"  target="code">robotSupport.kt</a> that, in its turns, uses technology-specific support objects, like
+<a href="../resources/itunibo.robotVirtual/clientWenvObjTcp.kt"  target="code">clientWenvObjTcp.kt</a>.
+<br/>
+The code of this <k>CodedQActor</k> can be found in: <br/><br/>
+
+<a href="../resources/itunibo/robot/robotAdapterQa.kt"  target="code">robotAdapterQa.kt</a>,
+
+<h2>Project</h2>
+
+<h4 id="obstacles">Obstacles </h4>
+
+During the execution of a <i>movement command</i>, the  <em>basicrobot</em>  could hit an <k>obstacle</k> (either fixed or moving).
+From now on we suppose that the actor <a href="../resources/itunibo/robot/robotAdapterQa.kt"  target="code">robotAdapterQa.kt</a> works also
+as an emitter of <k>qak  events</k> of the form
+
+<pre>
+
+Event  obstacle  : obstacle( DISTANCE )
+
+</pre>
+ 
+This kind of events is generated by the technology-specific support and propagated by using the
+<a href="../resources/itunibo/robot/robotAdapterQa.kt"  target="code">robotAdapterQa.kt</a> passed to it. 
+For example, the kotlin object 
+<a href="../resources/itunibo.robotVirtual/clientWenvObjTcp.kt" target="code">clientWenvObjTcp.kt</a>
+activates a coroutine (see the function <tt>startTheReader</tt>) that
+transforms  data coming from the <em>virtualrobot</em> 
+into the qak event <b><tt>obstacle</tt></b>.
+
+<h4>Code a little,  test a little ...</h4>
+The code of the model at this stage of the project can be found in: <br/><br/>
+
+<a href="../src/basicrobot.qak"  target="code">basicrobot.qak</a>,
+
+<br/><br/>
+As done in 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.robot2020/userDocs/LabBasicRobot2020.html#runthemodel" target="web">
+LabBasicRobot2020.html</a>, the model can be executed by using a python client included in 
+a jupyter notebook (e.g. <a href="./BasicRobotInteraction.ipynb">BasicRobotInteraction.ipynb</a> 
+in project <tt>it.unibo.basicrobot2020</tt>).  
+
+<h2>Test plans</h2> 
+
+<h2>Deployment</h2> 
+Following the same steps described in 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.robot2020/userDocs/LabBasicRobot2020.html#deploy" target="web">
+LabBasicRobot2020.html | Deployment</a>, build the file <tt>it.unibo.basicrobot-1.0.zip</tt> (command <tt>gradle -b build_ctxBasicRobot.gradle distZip</tt>) 
+and then execute <k>it.unibo.basicrobot.bat</k>.
+
+<h1>The requirement  <ks>req-step</ks></h1>
+ 
+The <ks>req-step</ks> entails the 'problematic' to define a <kc>proactive</kc> behavior (for a given time), without loosing the 
+capability to be <kc>reactive</kc> to the <k>stop</k> command according to the <ks>req-stop</ks>.
+<br/> 
+<hr/>
+<m>The 'problematic' to define a <kc>proactive</kc> behavior for a given time implies the need to 'react' to an event sent by
+a timer. The 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html#whenTime" target="web">
+whenTime</a> qak-primitive gives us the required expressive power:</m>
+
+<table style="width:100%" border="1">
+<tr>
+<td style="width:50%">
+<m>A model 'wired' on  <tt>2-second</tt>  specification:</m>
+<pre>
+	State doStep{
+		forward robotadapter -m cmd : cmd("w")
+ 	}
+	Transition t0 
+		<k>whenTime</k>   2000 -> endStep		//<ks>req-step</ks>
+		whenMsg stop    -> endStep		//<ks>req-stop</ks>
+		
+	State endStep{ 
+		forward robotadapter -m cmd : cmd("h")
+ 	}
+	Goto work		
+</pre>
+
+</td>
+
+<td>
+<m>A model in which the step time is set by the caller:</m>
+<pre>
+QActor robot context ctxRobot{
+<ks>["  var StepTime = 0L "]</ks>    
+...
+	State doStep{
+ 		<k>onMsg(  step :  step( T ) )</k>{
+			<ks> ["StepTime = payloadArg(0).toLong()"]</ks> 
+ 			forward robotadapter -m cmd : cmd(("w")
+		}
+	}
+	Transition t0 
+		<k>whenTimeVar StepTime</k> -> endStep	//<ks>req-step</ks>
+		whenMsg stop                  -> endStep	//<ks>req-stop</ks>
+</pre>
+
+</td>
+</tr> 
+</table>
+
+<hr/>
+
+<h3>On the different nature of the requirements</h3>
+
+The <k>step</k> is not a 'primitive' command, since it can be implemented by using the  <i>basic-commands</i> mentioned in the <ks>req-cmd</ks>. 
+Thus, it can be logically delegated to an 'application-layer' rather than to a basic-robot layer.  
+ 
+<h4>Divide et impera</h4>
+The idea of leaving unchanged the current model <a href="../src/basicrobot.qak"  target="code">basicrobot.qak</a> is supported by the motto
+<i>"never change a winning team"</i>. Moreover, by following the motto <i>"divide at impera"</i>,
+ we can embed the <ks>responsibility</ks> of the <ks>req-step</ks> requirement to another
+another robot layer, called here <em>smartrobot</em>.
+
+<br/><br/>
+<table style="width:100%" border="1"> 
+<tr>
+<td style="width:50%">
+<m>The <em>basicrobot</em> has the responsibility of the requirement <ks>req-cmd</ks> by considering also possible obstacles.</m>
+<br/>
+<a href="../src/basicrobot.qak" target="code">basicrobot.qak</a>
+<br/><br/>
+<m>The <em>basicrobot</em> makes use of another actor that has the responsibility of the technological details</m>
+<br/>
+<a href="../resources/itunibo/robot/robotAdapterQa.kt" target="code">robotAdapterQa.kt</a>
+</td>
+<td>
+<m>The <em>smartrobot</em> has the responsibility of the requirements <ks>req-step</ks> and <ks>req-stop</ks>.</m>
+<br/>
+<a href="../modelsOld/project/smartrobot.txt" target="code">smartrobot.qak</a>
+
+<br/><br/>
+
+<m>The <em>smartrobot</em> looks at the <em>basicrobot</em> as an 
+<a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.qakintro2020/userDocs/LabQakIntro2020.html#external" target="web">
+External actor</a>
+</m>
+</td>
+</tr>
+</table>
+
+<center><img src="./img/basicrobot2020.png" alt="basicrobot2020" width="60%" height="60%"></center>
+
+<!--
+<h4>Code a little,  test a little ...</h4>
+<ol>
+<li>As done in <a href="http://htmlpreview.github.com/?https://github.com/anatali/iss2020Lab/blob/master/it.unibo.robot2020/userDocs/LabBasicRobot2020.html#deploy" target="web">
+LabBasicRobot2020.html | Deployment</a>, create the distribution file <m><ks>it.unibo.basicrobot2020-1.0.jar</ks></m>;
+
+</li>
+<li>Unzip the file, copy the required knowledge (files <ks>*.pl</ks>) into the <k>bin</k> directory and execute  <m><ks>it.unibo.basicrobot2020.bat</ks></m>;</li>
+<li>Execute the <tt>Main</tt> related to the <a href="../modelsOld/project/smartrobot.txt" target="code">smartrobot.qak</a>.</li>
+</ol>
+-->
+
+<h3>About the <k>External actors</k></h3>
+In this version, the  <a href="../modelsOld/project/smartrobot.txt" target="code">smartrobot.qak</a>  
+uses the <a href="../src/basicrobot.qak"  target="code">basicrobot.qak</a>
+in order to show how a <tt>QActor</tt> can reuse another  <tt>QActor</tt> - already deployed - as it were a running 'microservice'.
+ 
+<br/><br/>
+Note that the event <k>obstacle</k> emitted by the <em>basicrobot</em> can be perceived by the caller actor  <em>smartrobot</em>  and 
+by any other QActor working in the same context of the caller.  For a more detailed discussion, see
+<a href="../../it.unibo.qakintro2020/userDocs/LabQakEvents2020.html" target="lab">LabQakEvents2020 | Qak-event propagation</a>
+
+<!--
+For another example, you can see the project <m><ks>it.unibo.basicrobotusage</ks></m>.
+<br/><br/>
+
+A more advanced version of <em>smartrobot</em> can be found in the project <m><ks>it.unibo.smartrobot2020</ks></m>.
+-->
+
+<h2>Test plans</h2>  
+
+<h1>Testing</h1> 
+
+<h1>Maintenance</h1> 
+	      	
+<br/><br/> 	
+</div>  
+
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+<img src="./img/alma.jpg" alt="alma" width="25%" height="8%">
+By AN - DISI - unibo   
+</div> 
+ 
+</body>
+</html>

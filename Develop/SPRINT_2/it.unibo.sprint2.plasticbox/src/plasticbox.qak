@@ -1,0 +1,36 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak.
+ * 
+ * ================================================================
+ */ 
+System plasticbox
+
+mqttBroker "localhost" : 1883  
+ 
+Dispatch collect  : collect(X)
+
+Context ctxWroom ip [ host= "localhost"     port= 8030 ] +mqtt  
+
+QActor plasticbox context ctxWroom{	
+	State s0 initial{
+		println("plasticBox started: initializing resource value...")
+		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NPB=10")
+		println("Resource correctly initialized")
+	}
+	Goto work
+	State work {}
+	Transition t0
+		whenMsg collect -> doCollect
+	
+	State doCollect{
+		onMsg(collect : collect(X)) {
+			["var Bottles = payloadArg(0)"]
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "$Bottles")
+		}
+	}	
+	Goto work
+}

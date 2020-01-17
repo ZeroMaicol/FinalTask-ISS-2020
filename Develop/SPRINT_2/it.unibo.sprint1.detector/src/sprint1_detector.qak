@@ -71,14 +71,8 @@ var IsBottle     = false
 QActor detectorbox context ctxWroom{
  	State s0 initial{
  		println("detectorBox starts")
+ 		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
  	}
- 	Goto activateResource 
-	
-	State activateResource{  
-	   run kotlincode.resServer.init(myself)
-	   run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
- 	   run kotlincode.resourceObserver.init("coap://127.0.0.1:5683","wroom/detectorBox")
-	}
 	Goto work 
 	
 	State work{}
