@@ -204,8 +204,24 @@ When using a real robot a sensor is needed to notify the basicrobot of an obstac
 This was already discussed in the basicrobot development, refer to it for more informations.
 
 <h3>The plastic box problematic</h3>
+How is the plasticBox supposed to know how many bottles has collected at a given time?<br/>
+Considering that the content of the detectorBox is released inside the plasticBox, this problematic could be solved in different ways:<br/>
+<ul>
+	<li>The plasticBox is equipped with a sensor that allows to count the number of bottles that are being discharged, in this case the detector just check the resource to see if he can discharge.</li>
+	<li>The plasticBox interacts directly with the detector and its notified of the number of bottles that the detector is discharging.</li>
+	<li>The plasticBox and the detector interacts only via CoAP updating resources.</li>
+</ul>
+As an analyst, the choice that better solves our case, is that the detector, after checking that 
+the plasticBox can receive the content of the detectorBox, notifies the plasticBox of the bottles that it is descharging.<br/>
+This check is possible via the CoAP resources updated by the plasticBox and the detectorBox.<br/>
+This choice was taken because the company doesn't possess a sensor that allows to count bottles, and the client is cheap.
+
+<h3>Finding the plastic box problematic</h3>
 When the detector has to empty the detectorBox, it could happen that the plasticBox hasn't already been discovered.<br/>
 To prevent this kind of situation, it is assumed that the plasticBox is always situated in a known place of the room.<br/>
+
+
+
 
 <h3>The ProductBacklog</h3>
 <strong>TASK EXPLORE THE ROOM</strong>: implement this task.<br/>
