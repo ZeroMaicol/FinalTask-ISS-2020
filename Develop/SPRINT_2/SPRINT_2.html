@@ -118,7 +118,6 @@ m{
  	font-size: 75%;
 }
 div.body{
-	width: 800px;
     font-size: 18px;
 }    
 div.req{
@@ -220,8 +219,89 @@ This choice was taken because the company doesn't possess a sensor that allows t
 When the detector has to empty the detectorBox, it could happen that the plasticBox hasn't already been discovered.<br/>
 To prevent this kind of situation, it is assumed that the plasticBox is always situated in a known place of the room.<br/>
 
+<h3>Functional Architecture</h3>
 
-
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The plasticBox</h4>
+<pre>
+QActor plasticbox context ctxWroom{	
+["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+	State s0 initial{
+		println("plasticBox started: initializing resource value...")
+		run kotlincode.coapSupport.init("coap://localhost:5683")
+		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=10")
+		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+		["val Bottles = Result.get(1)
+		  val NPB = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NPB=$NPB") 
+	}
+	Goto work
+	State work {}
+	Transition t0
+		whenMsg collect -> doCollect
+	
+	State doCollect{
+		onMsg(collect : collect(X)) {
+			["var Bottles = payloadArg(0)"]
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "$Bottles")
+		}
+	}	
+	Goto work
+}
+</pre>
+</td>
+<td>
+<h4>The resource of the plasticBox</h4>
+<pre>
+class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var bottles = 0
+	var NPB = 0 
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$bottles,$NPB" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetBottles() }
+	 		else -> {
+				if (msg.contains("NPB")) {
+					val NPBValue = msg.substring(4)
+					setNPB(NPBValue)
+				} else {
+					updateBottles(msg)
+				}
+	 		} 
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun updateBottles(msg:String){
+		var value = msg.toIntOrNull()
+		if (value != null) {
+			bottles = bottles+value
+		}
+	}
+	fun resetBottles(){
+		bottles = 0
+	}
+	fun setNPB(NPBValue:String){
+		var value = NPBValue.toIntOrNull()
+		if (value != null){
+			NPB = value
+		}
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
 
 <h3>The ProductBacklog</h3>
 <strong>TASK EXPLORE THE ROOM</strong>: implement this task.<br/>

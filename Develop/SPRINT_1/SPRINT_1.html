@@ -442,6 +442,45 @@ public void sprint_1_Test() {
 
 <h2>Project</h2> 
 
+<h3>The wroom server</h3> 
+In the problem analysis the detectorBox starts a resource server where the CoAP resources are located.<br/>
+This choice is acceptable for the this particular case, but to generalize the resource problematic the resource server must be independent from the detector.<br/>
+This is because there could be more resource that are not related to the detector and the server must be available even if the detector is not on.<br/>
+As a consequence a new QActor is created called wroomserver.<br/>
+This QActor takes care of starting the resource server where all the resource are located.
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<h4>Analysis Solution</h4> 
+<pre>
+QActor detectorbox context ctxWroom{
+	...
+	State activateResource{  
+		...
+	   <k>run kotlincode.resServer.init(myself)</k> //No longer needed
+	}
+	...
+}
+</pre>
+</td>
+<td>
+<h4>Project Solution</h4> 
+<pre>
+QActor wroomserver context ctxWroom{	
+	State s0 initial{
+		println("STARTING SERVER AND RESOURCES")
+		<k>run kotlincode.resServer.init(myself)</k>
+	  	run kotlincode.coapSupport.init("coap://localhost:5683")
+	}
+	Goto work
+	State work {}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
 <h2>Testing</h2>
 <h3>Virtual Robot (Christian)</h3>
 In order to test the functionalities and properties of the system before deploying to physical machines, we decided to use a virtual environment to replicate the overall behaviour of the system.</br>

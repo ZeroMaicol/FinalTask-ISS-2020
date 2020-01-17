@@ -1,0 +1,23 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak.
+ * 
+ * ================================================================
+ */ 
+System wroomserver
+
+mqttBroker "localhost" : 1883  
+
+Context ctxWroom ip [ host= "localhost"     port= 8040 ] +mqtt  
+
+QActor wroomserver context ctxWroom{	
+	State s0 initial{
+		println("STARTING SERVER AND RESOURCES")
+		run kotlincode.resServer.init(myself)
+	  	run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+	}
+	Goto work
+	State work {}
+}
