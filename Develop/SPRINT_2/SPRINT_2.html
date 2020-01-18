@@ -173,7 +173,7 @@ must be able to accept the following commands sent by the <i>smart-phone</i> of 
 
 <h2>Requirement analysis</h2>
 
-<h3>Functional TestPlan (Maicol)</h3>
+<h3>Functional TestPlan</h3>
 <h4>Explore</h4>
 After discussing with the client, the objective of this test plan is to verify that the detector is able to explore the entirety of the room, as a consequence, the entire map of the room.<br/>
 <ul>
@@ -202,7 +202,7 @@ This is already possible and already implemented inside the basicrobot.qak.<br/>
 When using a real robot a sensor is needed to notify the basicrobot of an obstacle.<br/>
 This was already discussed in the basicrobot development, refer to it for more informations.
 
-<h3>The plastic box problematic</h3>
+<h3>The plastic box problematic (Maicol)</h3>
 How is the plasticBox supposed to know how many bottles has collected at a given time?<br/>
 Considering that the content of the detectorBox is released inside the plasticBox, this problematic could be solved in different ways:<br/>
 <ul>
@@ -225,7 +225,7 @@ To prevent this kind of situation, it is assumed that the plasticBox is always s
 <tbody>
 <tr>
 <td style="width:50%">
-<h4>The plasticBox</h4>
+<h4>The plasticBox (Maicol)</h4>
 <pre>
 QActor plasticbox context ctxWroom{	
 ["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
@@ -254,7 +254,7 @@ QActor plasticbox context ctxWroom{
 </pre>
 </td>
 <td>
-<h4>The resource of the plasticBox</h4>
+<h4>The resource of the plasticBox (Maicol)</h4>
 <pre>
 class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name ){
  	var bottles = 0
@@ -312,9 +312,10 @@ class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name 
 <strong>TASK TERMINATE THE WORK</strong>: implement this task.<br/>
 <strong>RESOURCES</strong>: implement the new resources. <br/>
 <strong>TESTPLANS</strong>: prepare functional test plans.<br/>
+
 <h3>The Effort/Resources</h3>
-
-
+<strong>PLASTICBOX</strong>: The implementations of the plasticBox requires a .QAK and a resource. (1 hour)
+<strong>FRONTEND</strong>: Add 2 buttons. (5 minute)<br/>
 <h2>Test plans</h2> 
 <div class="remark">
 <ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
@@ -328,7 +329,7 @@ class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name 
 </div>
 
 <h2>Deployment</h2> 
-<h3>Detector and BasicRobot</h3> 
+<h3>Every .QAK</h3> 
 <ol>
 <li>Edit the generated file <tt>build.gradle</tt> as follows: 
 <ul>
@@ -336,7 +337,7 @@ class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name 
  <li><b>uncomment</b>: mainClassName = 'it.unibo.TODOKt'</li>
  <li><b>uncomment</b>: the jar. </li>
 </ul>
-<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot and <tt>'it.unibo.ctxWroom.MainCtxWroomKt'</tt> for the Detector.</li>
+<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot for example.</li>
 <li>Run <pre> gradle build eclipse</pre> </li>
 <li>Unzip (somewhere) the file <tt>it.unibo.project_name\build\distributions\it.unibo.project_name-1.0.zip</tt> where "project_name" depends on the project</li>
 <li>Copy into the <tt>bin</tt> directory all the configurations file <kc>name_file.pl</kc>, for example <kc>sysRules.pl</kc> </li>

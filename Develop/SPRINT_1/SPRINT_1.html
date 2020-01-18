@@ -488,7 +488,7 @@ The virtual environment will display the position of the detector and a represen
 It is already implemented in the project it.unibo.virtualrobot2020 and needs some changes to visualize the plastic bottles to pick up.
 
 <h2>Deployment</h2> 
-<h3>Detector and BasicRobot (Maicol)</h3> 
+<h3>Every .QAK (Maicol)</h3> 
 <ol>
 <li>Edit the generated file <tt>build.gradle</tt> as follows: 
 <ul>
@@ -496,7 +496,7 @@ It is already implemented in the project it.unibo.virtualrobot2020 and needs som
  <li><b>uncomment</b>: mainClassName = 'it.unibo.TODOKt'</li>
  <li><b>uncomment</b>: the jar. </li>
 </ul>
-<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot and <tt>'it.unibo.ctxWroom.MainCtxWroomKt'</tt> for the Detector.</li>
+<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot for example.</li>
 <li>Run <pre> gradle build eclipse</pre> </li>
 <li>Unzip (somewhere) the file <tt>it.unibo.project_name\build\distributions\it.unibo.project_name-1.0.zip</tt> where "project_name" depends on the project</li>
 <li>Copy into the <tt>bin</tt> directory all the configurations file <kc>name_file.pl</kc>, for example <kc>sysRules.pl</kc> </li>
