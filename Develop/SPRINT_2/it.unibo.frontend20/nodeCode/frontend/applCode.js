@@ -65,7 +65,11 @@ app.get('/', function(req, res) {
  app.post("/z", function(req, res,next) { handlePostMove("z","moving leftstep",  req,res,next); });  
  app.post("/x", function(req, res,next) { handlePostMove("x","moving rightstep", req,res,next); }); 
  app.post("/h", function(req, res,next) { handlePostMove("h","stopped",          req,res,next); });	
+ 
  app.post("/e", function(req, res,next) { handlePostExplore("e","explore",          req,res,next); });	
+ app.post("/suspend", function(req, res,next) { handlePostSuspend("suspend","suspend",          req,res,next); });
+ app.post("/terminate", function(req, res,next) { handlePostTerminate("terminate","terminate",          req,res,next); });	 
+ 
  app.post("/q", function(req, res,next) { handlePostMove("q","pick up",          req,res,next); });	
 
  	
@@ -79,6 +83,18 @@ app.get('/', function(req, res) {
  function handlePostExplore( cmd, msg, req, res, next ) {
 	result = "applCode | Web server done: " + cmd
 	publishExploreRequestToDetector( cmd )
+	next();
+ }
+ 
+function handlePostSuspend( cmd, msg, req, res, next ) {
+	result = "applCode | Web server done: " + cmd
+	publishSuspendRequestToDetector( cmd )
+	next();
+ }
+ 
+function handlePostTerminate( cmd, msg, req, res, next ) {
+	result = "applCode | Web server done: " + cmd
+	publishTerminateRequestToDetector( cmd )
 	next();
  }
 
@@ -130,6 +146,18 @@ var publishMsgToResourceModel = function( target, cmd ){
 var publishExploreRequestToDetector = function(cmd){  
 	var msgstr = "msg(explore,request,js,detector,explore(1),1)"  ;  
 	console.log("applCode | publishExploreRequestToDetector requests> "+ msgstr); 	
+	mqttUtils.publish( msgstr, "unibo/qak/detector" );
+}
+
+var publishSuspendRequestToDetector = function(cmd){  
+	var msgstr = "msg(suspend,request,js,detector,suspend(1),1)"  ;  
+	console.log("applCode | publishSuspendRequestToDetector requests> "+ msgstr); 	
+	mqttUtils.publish( msgstr, "unibo/qak/detector" );
+}
+
+var publishTerminateRequestToDetector = function(cmd){  
+	var msgstr = "msg(terminate,request,js,detector,terminate(1),1)"  ;  
+	console.log("applCode | publishTerminateRequestToDetector requests> "+ msgstr); 	
 	mqttUtils.publish( msgstr, "unibo/qak/detector" );
 }
 

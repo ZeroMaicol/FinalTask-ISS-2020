@@ -18,6 +18,8 @@ socket.on( 'message', function(v){
   if( v.indexOf("distance")  >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
   if( v.indexOf("pos")       >= 0 ){document.getElementById('robotDisplay').innerHTML=v; }
   if( v.indexOf("exploreAck")       >= 0 ){document.getElementById('exploreState').innerHTML=v; }
+  if( v.indexOf("suspendAck")       >= 0 ){document.getElementById('suspendState').innerHTML=v; }
+  if( v.indexOf("terminateAck")       >= 0 ){document.getElementById('terminateState').innerHTML=v; }
   //if( v.indexOf("obstacle")  >= 0 ){document.getElementById('infoDisplay').innerHTML=v; }
   //if( v.indexOf("polar")     >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
 
@@ -42,9 +44,13 @@ that emits modelChange
 		<tr>
 			<td align="center">
 				<form action="/e" method="post">
-					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;" value="Explore" >
-					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;" value="Terminate" >
-					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:30px" value="Suspend" >
+					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:5px" value="Explore" >
+				</form>	
+				<form action="/suspend" method="post">
+					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:5px" value="Suspend" >
+				</form>
+				<form action="/terminate" method="post">	
+					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:30px" value="Terminate" >
 				</form>
 			</td>
 		</tr>
@@ -133,7 +139,9 @@ that emits modelChange
 </div> -->
 <div style="background-color: #FAF19C">
 	<div style="font-size:150%">
- 		<strong>Explore STATE</strong>: <span id="exploreState"></span>
+ 		<strong>Explore STATE</strong>: <span id="exploreState"></span><br/>
+		<strong>Suspend STATE</strong>: <span id="suspendState"></span><br/>
+		<strong>Terminate STATE</strong>: <span id="terminateState"></span>
   	</div>
 </div>
 <center></center>
