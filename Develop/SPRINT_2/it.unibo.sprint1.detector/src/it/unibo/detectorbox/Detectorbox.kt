@@ -15,11 +15,17 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
+		var Result:HashMap<Int,Int> = HashMap<Int,Int>()
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
 						println("detectorBox starts")
 						kotlincode.coapSupport.init( "coap://localhost:5683"  )
+						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "NDB=5" )
+						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
+						val Bottles = Result.get(1)
+								  val NDB = Result.get(2)
+						println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB")
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 

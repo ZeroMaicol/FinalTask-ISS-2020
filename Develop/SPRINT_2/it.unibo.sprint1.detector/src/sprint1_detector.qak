@@ -65,13 +65,19 @@ var IsBottle     = false
 		["IsBottle = false"] 
    	}
 	Goto work 
-  
+	
 }
 
 QActor detectorbox context ctxWroom{
+["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
  	State s0 initial{
  		println("detectorBox starts")
- 		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+ 		run kotlincode.coapSupport.init("coap://localhost:5683")
+ 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=5")
+ 		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val Bottles = Result.get(1)
+		  val NDB = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB") 
  	}
 	Goto work 
 	

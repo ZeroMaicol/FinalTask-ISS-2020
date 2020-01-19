@@ -57,4 +57,16 @@ lateinit var host   : String
 		result.put(2, npb.toInt())
 	}
 	
+	fun readDetectorBox(  path : String, result : HashMap<Int,Int> ){
+		setClientForPath( path )
+		val respGet : CoapResponse = client.get( )
+		val v = "state("+respGet.getResponseText()+")"
+		val bottles = ( Term.createTerm(v) as Struct ).getArg(0).toString()
+		val ndb = ( Term.createTerm(v) as Struct ).getArg(1).toString()
+		//println("coapSupport | readPos v=$v")
+		result.put(1, bottles.toInt())
+		result.put(2, ndb.toInt())
+	}
+	
+	
 }
