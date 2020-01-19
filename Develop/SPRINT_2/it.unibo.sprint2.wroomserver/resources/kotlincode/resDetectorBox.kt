@@ -15,19 +15,27 @@ import itunibo.planner.moveUtils
 
 class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name ){
  	var bottles = 0
+	var NDB = 0
 	
 	init{
 		setObservable(true)
 		println("resource $name  | created  " );		
 	}
 	override fun handleGET( exchange : CoapExchange ) {
-		exchange.respond( "$bottles" )  // moving=$moving" , $pos dir($direction)
+		exchange.respond( "$bottles, $NDB" )  // moving=$moving" , $pos dir($direction)
 	}
 	override fun handlePUT( exchange : CoapExchange) {
 		val msg = exchange.getRequestText()
 		when( msg ){
 			"0" ->  { resetBottles() }
- 			else -> updateBottles()
+	 		else -> {
+				if (msg.contains("NDB")) {
+					val NDBValue = msg.substring(4)
+					setNDB(NDBValue)
+				} else {
+					updateBottles()
+				}
+	 		} 
 		}
 		changed()	// notify all CoAp observers
  		exchange.respond(CHANGED)
@@ -39,6 +47,13 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 	
 	fun resetBottles(){
 		bottles = 0
+	}
+	
+	fun setNDB(NDBValue:String){
+		var value = NDBValue.toIntOrNull()
+		if (value != null){
+			NDB = value
+		}
 	}
 	
 }
