@@ -303,6 +303,87 @@ class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name 
 </tr>
 </tbody></table>
 
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The detectorBox (Maicol)</h4>
+<pre>
+QActor detectorbox context ctxWroom{
+["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+ 	State s0 initial{
+ 		println("detectorBox starts")
+ 		run kotlincode.coapSupport.init("coap://localhost:5683")
+ 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=5")
+ 		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val Bottles = Result.get(1)
+		  val NDB = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB") 
+ 	}
+	Goto work 
+	State work{}
+	Transition t0
+		whenMsg updateBottle -> updateBottleResource
+	
+  	State updateBottleResource{
+		onMsg( updateBottle : updateBottle(X)){			
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
+		}   
+	}
+  	Goto work
+ }
+</pre>
+</td>
+<td>
+<h4>The resource of the detectorBox (Maicol)</h4>
+<pre>
+class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var bottles = 0
+	var NDB = 0
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$bottles, $NDB" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetBottles() }
+	 		else -> {
+				if (msg.contains("NDB")) {
+					val NDBValue = msg.substring(4)
+					setNDB(NDBValue)
+				} else {
+					updateBottles()
+				}
+	 		} 
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun updateBottles(){
+		bottles = bottles+1
+	}
+	fun resetBottles(){
+		bottles = 0
+	}
+	fun setNDB(NDBValue:String){
+		var value = NDBValue.toIntOrNull()
+		if (value != null){
+			NDB = value
+		}
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
+
+
 <h3>The ProductBacklog</h3>
 <strong>TASK EXPLORE THE ROOM</strong>: implement this task.<br/>
 <strong>TASK EMPTY THE DETECTORBOX</strong>: implement this task.<br/>
