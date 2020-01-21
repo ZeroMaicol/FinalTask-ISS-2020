@@ -9,13 +9,16 @@
 System plasticbox
 
 mqttBroker "localhost" : 1883  
- 
+
+Request tryPutBottle : tryPutBottle(N_BOTTLE)
+Reply receptionAllowed: receptionAllowed(X)
+Reply plasticBoxFull: plasticBoxFull(X)
 Dispatch collect  : collect(X)
 
 Context ctxWroom ip [ host= "localhost"     port= 8030 ] +mqtt  
 
-QActor plasticbox context ctxWroom{	
-["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+QActor plasticbox context ctxWroom{
+	["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
 	State s0 initial{
 		println("plasticBox started: initializing resource value...")
 		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
@@ -26,15 +29,42 @@ QActor plasticbox context ctxWroom{
 		println("Resource correctly initialized: bottles=$Bottles, NPB=$NPB") 
 	}
 	Goto work
+	
 	State work {}
 	Transition t0
+		whenRequest tryPutBottle -> checkBottleReception
 		whenMsg collect -> doCollect
+	
+	State checkBottleReception {
+		println("plasticBox checks if can receive bottles")
+		onMsg(tryPutBottle : tryPutBottle(N_BOTTLE)) {
+			["val bottlesInDetector = payloadArg(0).toInt()"]
+			run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+			// funziona solo se il robot prende 1 bottiglia alla volta, perchè qak&kotlin insieme fanno boom
+			["	val bottlesInPlasticBox = if(Result != null) Result.get(1) else 10
+				val NPB = if(Result != null) Result.get(2) else 0
+				val totalBottles = if(bottlesInPlasticBox != null) bottlesInPlasticBox.plus(bottlesInDetector) else 10
+				var success = false
+				if(NPB != null)
+					success = ! totalBottles.compareTo(NPB).equals(0)
+			"]
+			if "success" {
+				replyTo tryPutBottle with receptionAllowed : receptionAllowed(OK)
+			} else {
+				replyTo tryPutBottle with plasticBoxFull : plasticBoxFull(NO)
+			}
+		}
+	}
+	Goto work
 	
 	State doCollect{
 		onMsg(collect : collect(X)) {
+			println("plasticBox receive a bottle")
 			["var Bottles = payloadArg(0)"]
+			println("$Bottles")
 			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "$Bottles")
 		}
 	}	
 	Goto work
+
 }

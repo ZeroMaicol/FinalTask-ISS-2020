@@ -19,7 +19,7 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						println("detectorBox starts")
+						println("detectorBox started: initializing resource value...")
 						kotlincode.coapSupport.init( "coap://localhost:5683"  )
 						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "NDB=5" )
 						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
@@ -39,6 +39,33 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 						if( checkMsgContent( Term.createTerm("updateBottle(X)"), Term.createTerm("updateBottle(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "1" )
+						}
+					}
+					 transition( edgeName="goto",targetState="tryThrowBottle", cond=doswitch() )
+				}	 
+				state("tryThrowBottle") { //this:State
+					action { //it:State
+						println("detector ask to the plasticbox the permission to throw the bottle...")
+						request("tryPutBottle", "tryPutBottle(1)" ,"plasticbox" )  
+					}
+					 transition(edgeName="t03",targetState="receptionAllowed",cond=whenReply("receptionAllowed"))
+					transition(edgeName="t04",targetState="plasticBoxIsFull",cond=whenReply("plasticBoxFull"))
+				}	 
+				state("receptionAllowed") { //this:State
+					action { //it:State
+						println("detector throws the bottle into the plasticBox")
+						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
+						val bottles = Result.get(1)
+						forward("collect", "collect(1)" ,"plasticbox" ) 
+						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "0" )
+					}
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("plasticBoxIsFull") { //this:State
+					action { //it:State
+						println("detector has found the plasticBox full of bottles, ew what to do ...")
+						if( checkMsgContent( Term.createTerm("plasticBoxFull(X)"), Term.createTerm("plasticBoxFull(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
 						}
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )

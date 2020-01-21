@@ -11,15 +11,24 @@ System wroom
 mqttBroker "localhost" : 1883  
  
 Dispatch cmd  : cmd(X)
+
 Dispatch updateBottle  : updateBottle(X)
 Request  explore   :  explore(X)
-Reply    exploreAck  :  exploreAck(V)  
+Reply    exploreAck  :  exploreAck(V)
+
+Request tryPutBottle : tryPutBottle(N_BOTTLE)
+Reply receptionAllowed: receptionAllowed(X)
+Reply plasticBoxFull: plasticBoxFull(X)
+Dispatch collect: collect(X)
+ 
 Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
 
-Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt  
-Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] //+mqtt      
+Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt
+Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] //+mqtt
+Context ctxPlasticBox ip [ host= "::1" port= 8030] +mqtt
 
-ExternalQActor basicrobot context ctxBasicRobot   
+ExternalQActor basicrobot context ctxBasicRobot 
+ExternalQActor plasticbox context ctxPlasticBox  
     
 QActor detector context ctxWroom{
 [" 
@@ -60,7 +69,7 @@ var IsBottle     = false
     		} else{
  				forward basicrobot -m cmd : cmd(h)   		
  				println("Stop for safety, obstacle not bottle!")	
- 			} 
+ 			}
 		}
 		["IsBottle = false"] 
    	}
@@ -71,13 +80,13 @@ var IsBottle     = false
 QActor detectorbox context ctxWroom{
 ["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
  	State s0 initial{
- 		println("detectorBox starts")
+ 		println("detectorBox started: initializing resource value...")
  		run kotlincode.coapSupport.init("coap://localhost:5683")
  		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=5")
  		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
 		["val Bottles = Result.get(1)
 		  val NDB = Result.get(2)"]
-		println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB") 
+		println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB")
  	}
 	Goto work 
 	
@@ -86,11 +95,37 @@ QActor detectorbox context ctxWroom{
 		whenMsg updateBottle -> updateBottleResource
 	
   	State updateBottleResource{
-		onMsg( updateBottle : updateBottle(X)){			
+		onMsg( updateBottle : updateBottle(X)){
 			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
 		}   
 	}
-  	Goto work
+  	//Goto work // TODO quando si triggera lo svuotamento? al momento si triggera subito dopo aver raccolto
+  	Goto tryThrowBottle
+  	
+  	State tryThrowBottle {
+  		println("detector ask to the plasticbox the permission to throw the bottle...")
+  		request plasticbox -m tryPutBottle : tryPutBottle( 1 )
+  	}
+  	Transition t0
+  		whenReply receptionAllowed -> receptionAllowed
+		whenReply plasticBoxFull -> plasticBoxIsFull
+	
+	State receptionAllowed {
+		println("detector throws the bottle into the plasticBox")
+		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val bottles = Result.get(1)"]
+		forward plasticbox -m collect : collect( 1 )
+		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "0")
+	}
+	Goto work
+	
+	State plasticBoxIsFull {
+		println("detector has found the plasticBox full of bottles, ew what to do ...")
+		onMsg( plasticBoxFull : plasticBoxFull( X )) {
+			// TODO what to do? mmmh ...
+		}
+	}
+	Goto work
 
  }
  
