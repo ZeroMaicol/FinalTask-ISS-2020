@@ -41,34 +41,25 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 								kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "1" )
 						}
 					}
-					 transition( edgeName="goto",targetState="tryThrowBottle", cond=doswitch() )
+					 transition( edgeName="goto",targetState="checkPlasticBoxBottles", cond=doswitch() )
 				}	 
-				state("tryThrowBottle") { //this:State
+				state("checkPlasticBoxBottles") { //this:State
 					action { //it:State
-						println("detector ask to the plasticbox the permission to throw the bottle...")
-						request("tryPutBottle", "tryPutBottle(1)" ,"plasticbox" )  
-					}
-					 transition(edgeName="t03",targetState="receptionAllowed",cond=whenReply("receptionAllowed"))
-					transition(edgeName="t04",targetState="plasticBoxIsFull",cond=whenReply("plasticBoxFull"))
-				}	 
-				state("receptionAllowed") { //this:State
-					action { //it:State
-						println("detector throws the bottle into the plasticBox")
+						println("detectorBox checks if can put bottles inside the plasticBox")
 						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
-						val bottles = Result.get(1)
-						forward("collect", "collect(1)" ,"plasticbox" ) 
+						val bottlesInDetector : Int? = Result.get(1)
+						kotlincode.coapSupport.readPlasticBox( "wroom/plasticBox", Result  )
+							val bottlesInPlasticBox : Int? = Result.get(1)
+									val NPB : Int? = Result.get(2)
+									val totalBottles : Int? = if(bottlesInPlasticBox != null && bottlesInDetector != null) bottlesInPlasticBox.plus(bottlesInDetector) else 10
+						if(compareValues(NPB, totalBottles) > 0){ println("detector put the bottle into the plasticBox")
 						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "0" )
+						forward("collect", "collect(bottlesInDetector)" ,"plasticbox" ) 
+						 }
+						else
+						 { println("detector has found the plasticBox full of bottles, ew what to do ...")
+						  }
 					}
-					 transition( edgeName="goto",targetState="work", cond=doswitch() )
-				}	 
-				state("plasticBoxIsFull") { //this:State
-					action { //it:State
-						println("detector has found the plasticBox full of bottles, ew what to do ...")
-						if( checkMsgContent( Term.createTerm("plasticBoxFull(X)"), Term.createTerm("plasticBoxFull(X)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-						}
-					}
-					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 
 			}
 		}

@@ -32,39 +32,31 @@ class Plasticbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 				state("work") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t00",targetState="checkBottleReception",cond=whenRequest("tryPutBottle"))
-					transition(edgeName="t01",targetState="doCollect",cond=whenDispatch("collect"))
-				}	 
-				state("checkBottleReception") { //this:State
-					action { //it:State
-						println("plasticBox checks if can receive bottles")
-						if( checkMsgContent( Term.createTerm("tryPutBottle(N_BOTTLE)"), Term.createTerm("tryPutBottle(N_BOTTLE)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								val bottlesInDetector = payloadArg(0).toInt()
-								kotlincode.coapSupport.readPlasticBox( "wroom/plasticBox", Result  )
-									val bottlesInPlasticBox = if(Result != null) Result.get(1) else 10
-												val NPB = if(Result != null) Result.get(2) else 0
-												val totalBottles = if(bottlesInPlasticBox != null) bottlesInPlasticBox.plus(bottlesInDetector) else 10
-												var success = false
-												if(NPB != null)
-													success = ! totalBottles.compareTo(NPB).equals(0)
-								if(success){ answer("tryPutBottle", "receptionAllowed", "receptionAllowed(OK)"   )  
-								 }
-								else
-								 { answer("tryPutBottle", "plasticBoxFull", "plasticBoxFull(NO)"   )  
-								  }
-						}
-					}
-					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+					 transition(edgeName="t00",targetState="doCollect",cond=whenDispatch("collect"))
+					transition(edgeName="t01",targetState="emptyTheBox",cond=whenDispatch("empty"))
 				}	 
 				state("doCollect") { //this:State
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("collect(X)"), Term.createTerm("collect(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("plasticBox receive a bottle")
+								println("plasticBox collect bottles")
 								var Bottles = payloadArg(0)
-								println("$Bottles")
+								println("controllo l'input ricevuto")
+								println(Bottles)
 								kotlincode.coapSupport.updateResource(myself ,"wroom/plasticBox", "$Bottles" )
+						}
+					}
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("emptyTheBox") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("empty(X)"), Term.createTerm("empty(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("plasticBox empty")
+								var Bottles = payloadArg(0)
+								println("controllo l'input ricevuto")
+								println(Bottles)
+								kotlincode.coapSupport.updateResource(myself ,"wroom/plasticBox", "0" )
 						}
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )

@@ -16,9 +16,6 @@ Dispatch updateBottle  : updateBottle(X)
 Request  explore   :  explore(X)
 Reply    exploreAck  :  exploreAck(V)
 
-Request tryPutBottle : tryPutBottle(N_BOTTLE)
-Reply receptionAllowed: receptionAllowed(X)
-Reply plasticBoxFull: plasticBoxFull(X)
 Dispatch collect: collect(X)
  
 Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
@@ -37,7 +34,7 @@ var IsBottle     = false
 	State s0 initial{
 		println("detector starting...")
 		delay 2000
- 		println("detector started!")	
+ 		println("detector started!")
 	}
 	Goto work
 	
@@ -78,7 +75,7 @@ var IsBottle     = false
 }
 
 QActor detectorbox context ctxWroom{
-["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+	["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
  	State s0 initial{
  		println("detectorBox started: initializing resource value...")
  		run kotlincode.coapSupport.init("coap://localhost:5683")
@@ -100,32 +97,26 @@ QActor detectorbox context ctxWroom{
 		}   
 	}
   	//Goto work // TODO quando si triggera lo svuotamento? al momento si triggera subito dopo aver raccolto
-  	Goto tryThrowBottle
+  	Goto checkPlasticBoxBottles
   	
-  	State tryThrowBottle {
-  		println("detector ask to the plasticbox the permission to throw the bottle...")
-  		request plasticbox -m tryPutBottle : tryPutBottle( 1 )
-  	}
-  	Transition t0
-  		whenReply receptionAllowed -> receptionAllowed
-		whenReply plasticBoxFull -> plasticBoxIsFull
-	
-	State receptionAllowed {
-		println("detector throws the bottle into the plasticBox")
+  	State checkPlasticBoxBottles {
+		println("detectorBox checks if can put bottles inside the plasticBox")
 		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
-		["val bottles = Result.get(1)"]
-		forward plasticbox -m collect : collect( 1 )
-		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "0")
-	}
-	Goto work
-	
-	State plasticBoxIsFull {
-		println("detector has found the plasticBox full of bottles, ew what to do ...")
-		onMsg( plasticBoxFull : plasticBoxFull( X )) {
-			// TODO what to do? mmmh ...
+		["val bottlesInDetector : Int? = Result.get(1)"]
+		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+		["	val bottlesInPlasticBox : Int? = Result.get(1)
+			val NPB : Int? = Result.get(2)
+			val totalBottles : Int? = if(bottlesInPlasticBox != null && bottlesInDetector != null) bottlesInPlasticBox.plus(bottlesInDetector) else 10
+		"] 
+		if "compareValues(NPB, totalBottles) > 0" {
+			println("detector put the bottle into the plasticBox")
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "0")
+			forward plasticbox -m collect : collect(bottlesInDetector)// (bottlesInDetector) inoltra "bottlesInDetector"
+		} else {
+			println("detector has found the plasticBox full of bottles, ew what to do ...")
+			// TODO
 		}
 	}
-	Goto work
-
+	
  }
  
