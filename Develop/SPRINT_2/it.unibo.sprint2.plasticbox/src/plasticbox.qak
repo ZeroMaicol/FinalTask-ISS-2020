@@ -15,16 +15,23 @@ Dispatch empty : empty(X)
 
 Context ctxWroom ip [ host= "localhost"     port= 8030 ] +mqtt  
 
+CodedQActor plasticBoxAdapter context ctxWroom
+		className "plasticBox.plasticBoxAdapter"
+
 QActor plasticbox context ctxWroom{
-	["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NPB:Int = 0
+"]
 	State s0 initial{
 		println("plasticBox started: initializing resource value...")
 		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
-		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=10")
+		["NPB = plasticBox.plasticBoxSupport.NPB"]
+		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=$NPB")
 		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
 		["val Bottles = Result.get(1)
-		  val NPB = Result.get(2)"]
-		println("Resource correctly initialized: bottles=$Bottles, NPB=$NPB") 
+		  val npb = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NPB=$npb") 
 	}
 	Goto work
 	

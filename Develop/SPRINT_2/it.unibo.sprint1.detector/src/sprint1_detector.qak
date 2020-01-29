@@ -34,6 +34,9 @@ Context ctxPlasticBox ip [ host= "::1" port= 8030] +mqtt
 
 ExternalQActor basicrobot context ctxBasicRobot 
 ExternalQActor plasticbox context ctxPlasticBox  
+
+CodedQActor detectorAdapter context ctxWroom
+		className "detector.detectorAdapter"
     
 QActor detector context ctxWroom{
 ["
@@ -234,15 +237,19 @@ var unexploredPosition: Pair<Int,Int>? = null
 }
 
 QActor detectorbox context ctxWroom{
-	["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NDB:Int = 0
+"]
  	State s0 initial{
  		println("detectorBox started: initializing resource value...")
  		run kotlincode.coapSupport.init("coap://localhost:5683")
- 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=5")
+ 		["NDB = detector.detectorSupport.NDB"]
+ 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=$NDB")
  		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
 		["val Bottles = Result.get(1)
-		  val NDB = Result.get(2)"]
-		println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB")
+		  val ndb = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NDB=$ndb")
  	}
 	Goto work 
 	
