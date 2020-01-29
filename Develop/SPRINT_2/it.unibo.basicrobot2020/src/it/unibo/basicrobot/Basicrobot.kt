@@ -24,8 +24,8 @@ class Basicrobot ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						 
 						//val filter   = itunibo.robot.rx.sonaractorfilter("filter", myself)  //generates obstacle
 						//val logger   = itunibo.robot.rx.Logger("logger")
-						val forradar = itunibo.robot.rx.sonarforradar("forradar", myself)  //generates polar
-						itunibo.robot.robotSupport.subscribe( forradar ) 
+						//val forradar = itunibo.robot.rx.sonarforradar("forradar", myself)  //generates polar
+						//itunibo.robot.robotSupport.subscribe( forradar ) 
 						println("	basicrobot | starts (with robotadapter in the same context)")
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
@@ -60,17 +60,11 @@ class Basicrobot ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 				}	 
 				state("handleObstacle") { //this:State
 					action { //it:State
-						forward("cmd", "cmd(h)" ,"robotadapter" ) 
-						println("	basicrobot | stops (for safety) since  obstacle  ")
 					}
 					 transition( edgeName="goto",targetState="movefarFromObstacle", cond=doswitch() )
 				}	 
 				state("movefarFromObstacle") { //this:State
 					action { //it:State
-						println("	basicrobot | going back (to avoid event-generation) ")
-						forward("cmd", "cmd(s)" ,"robotadapter" ) 
-						delay(100) 
-						forward("cmd", "cmd(h)" ,"robotadapter" ) 
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 

@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import itunibo.planner.model.RobotState.Direction;
+import kotlin.Pair;
+
 public class RoomMap implements Serializable{
 	/**
 	 * 
@@ -161,8 +164,8 @@ public class RoomMap implements Serializable{
 			builder.append("|");
 			for (Box b : a) {
 				if (b == null)
-					break;
-				if (b.isRobot())
+					builder.append("-, ");
+				else if (b.isRobot())
 					builder.append("r, ");
 				else if (b.isObstacle())
 					builder.append("X, ");
@@ -189,6 +192,93 @@ public class RoomMap implements Serializable{
 		return roomMap.size();
 	}
 	
+	public boolean isFullyExplored() {
+		try {
+			for (int i = 0; i < roomMap.size(); i++) {
+				List<Box> row = roomMap.get(i);
+				if (row != null) { 
+					for (int j = 0; j < row.size(); j++) {
+						Box cell = row.get(j);
+						if (cell != null && !cell.isObstacle() && isUnexplored(i,j)) {
+							return false;
+						}
+					}
+				}
+			}
+		} catch (IndexOutOfBoundsException e) {
+			e.printStackTrace();
+			System.out.println(this);
+		}
+		return true;
+	}
+	
+	private boolean isUnexplored(int x, int y) {
+		int newX = x;
+		int newY = y;
+		
+		newX = x - 1;
+		if (newX >= 0 && roomMap.get(newX).get(newY) == null) {
+			return true;
+		}
+		
+		newX = x + 1;
+		if (newX >= roomMap.size() || roomMap.get(newX).get(newY) == null) {
+			return true;
+		}
+		
+		newX = x;
+		newY = y - 1;
+		if (newY >= 0 && roomMap.get(newX).get(newY) == null) {
+			return true;
+		}
+		
+		newY = y + 1;
+		if (newY >= roomMap.get(newX).size() || roomMap.get(newX).get(newY) == null) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public Pair<Integer, Integer> getFirstNonExploredPosition() {
+		for (int i = 0; i < roomMap.size(); i++) {
+			List<Box> row = roomMap.get(i);
+			if (row != null) { 
+				for (int j = 0; j < row.size(); j++) {
+					Box cell = row.get(j);
+					
+					if (cell != null && cell.isDirty() && isReachable(i,j)) {
+						return new Pair<>(j,i);
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	private boolean isReachable(int x, int y) {
+		System.out.println("isReachable "+ x + "," + y + " ");
+
+		List<Pair<Integer,Integer>> positions = new ArrayList<>();
+		positions.add(new Pair<>(x - 1,y));
+		positions.add(new Pair<>(x + 1,y));
+		positions.add(new Pair<>(x, y - 1));
+		positions.add(new Pair<>(x, y + 1));
+		
+		for (Pair<Integer, Integer> pos: positions) {
+			int row = pos.getFirst();
+			int col = pos.getSecond();
+			if (row >= 0 && row < roomMap.size() 
+					&& col >= 0 && col < roomMap.get(row).size()) {
+				Box b = roomMap.get(row).get(col);
+				if (b != null && !b.isDirty() && !b.isRobot() && !b.isObstacle()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	public boolean isClean() {
 		for (ArrayList<Box> row : roomMap) {
 			for (Box b : row)
@@ -201,7 +291,9 @@ public class RoomMap implements Serializable{
 	public void setObstacles() {
 		for (ArrayList<Box> row : roomMap) {
 			for (Box b : row) {
-				if (!b.isObstacle() && b.isDirty()) {
+				int y = row.indexOf(b);
+				int x = roomMap.indexOf(row);
+				if (!b.isObstacle() && b.isDirty() && !isReachable(x, y)) {
 					b.setDirty(false);
 					b.setObstacle(true);
 				}

@@ -15,8 +15,18 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
-		 
+		
+		val StepDuration = 400L
 		var IsBottle     = false
+		var radius = 0
+		var exploreX = 0
+		var exploreY = 0
+		var radiusFinished = false
+		var hasPlannedMoves = false
+		var exploringHorizontal = true
+		var CurrentCommand = ""
+		var goToHome = false
+		var unexploredPosition: Pair<Int,Int>? = null
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -28,37 +38,163 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 				}	 
 				state("work") { //this:State
 					action { //it:State
+						println("")
+						println("")
+						println("")
+						println("work::: CurrentMap is:")
+						goToHome = false
+						itunibo.planner.plannerUtil.showMap(  )
 					}
-					 transition(edgeName="t00",targetState="doExplore",cond=whenRequest("explore"))
+					 transition(edgeName="t00",targetState="startExplore",cond=whenRequest("explore"))
+				}	 
+				state("startExplore") { //this:State
+					action { //it:State
+						println("$name in ${currentState.stateName} | $currentMsg")
+						itunibo.planner.plannerUtil.initAI(  )
+						answer("explore", "exploreAck", "exploreAck(OK)"   )  
+						radius = 0
+					}
+					 transition( edgeName="goto",targetState="exploreNextRadius", cond=doswitch() )
+				}	 
+				state("gotoUnexplored") { //this:State
+					action { //it:State
+						println("gotoUnexplored")
+							radiusFinished = true
+									unexploredPosition = itunibo.planner.plannerUtil.getFirstNonExploredPosition()
+						if(unexploredPosition != null && goToHome){ itunibo.planner.plannerUtil.setGoal( "${unexploredPosition!!.first}", "${unexploredPosition!!.second}"  )
+						itunibo.planner.plannerUtil.doPlan(  )
+						 }
+						else
+						 { goToHome = true
+						  }
+					}
+					 transition( edgeName="goto",targetState="doPlannedMoves", cond=doswitchGuarded({(unexploredPosition != null)}) )
+					transition( edgeName="goto",targetState="goHome", cond=doswitchGuarded({! (unexploredPosition != null)}) )
+				}	 
+				state("goHome") { //this:State
+					action { //it:State
+						itunibo.planner.plannerUtil.setGoal( "0", "0"  )
+						itunibo.planner.plannerUtil.doPlan(  )
+					}
+					 transition( edgeName="goto",targetState="executeHomeMove", cond=doswitch() )
+				}	 
+				state("executeHomeMove") { //this:State
+					action { //it:State
+						if((itunibo.planner.plannerUtil.isRobotHome())){ forward("backHome", "backHome(OK)" ,"detector" ) 
+						 }
+						else
+						 { delay(500) 
+						 var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()
+						 itunibo.planner.plannerUtil.doMove( CmdPayload  )
+						 if(CmdPayload == "w"){ request("onestep", "onestep($StepDuration)" ,"steprobot" )  
+						  }
+						 if(CmdPayload == "a"){ forward("cmd", "cmd(l)" ,"basicrobot" ) 
+						 forward("moveOk", "moveOk(OK)" ,"detector" ) 
+						  }
+						 if(CmdPayload == "d"){ forward("cmd", "cmd(r)" ,"basicrobot" ) 
+						 forward("moveOk", "moveOk(OK)" ,"detector" ) 
+						  }
+						  }
+					}
+					 transition(edgeName="t11",targetState="work",cond=whenDispatch("backHome"))
+					transition(edgeName="t12",targetState="executeHomeMove",cond=whenDispatch("moveOk"))
+					transition(edgeName="t13",targetState="executeHomeMove",cond=whenReply("stepdone"))
+				}	 
+				state("exploreNextRadius") { //this:State
+					action { //it:State
+						println("")
+						println("------------")
+						println("exploreNextRadius: $radius")
+						
+									radius = radius + 1
+									radiusFinished = false
+									exploreY = radius
+									exploreX = 0
+									exploringHorizontal = true
+					}
+					 transition( edgeName="goto",targetState="doExplore", cond=doswitchGuarded({(!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)}) )
+					transition( edgeName="goto",targetState="gotoUnexplored", cond=doswitchGuarded({! (!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)}) )
 				}	 
 				state("doExplore") { //this:State
 					action { //it:State
-						println("$name in ${currentState.stateName} | $currentMsg")
-						answer("explore", "exploreAck", "exploreAck(OK)"   )  
-						forward("cmd", "cmd(w)" ,"basicrobot" ) 
+						if (exploreY < 0) { radiusFinished = true }
+						if((!radiusFinished)){ println("")
+						println("doExplore: currentMap:")
+						itunibo.planner.plannerUtil.showMap(  )
+						println("doExplore goal: ($exploreX,$exploreY)")
+						itunibo.planner.plannerUtil.setGoal( "$exploreX", "$exploreY"  )
+						itunibo.planner.plannerUtil.doPlan(  )
+						
+										if (exploringHorizontal) {
+											if (exploreX < radius) { exploreX = exploreX + 1 }
+											else { 
+												exploringHorizontal = false 
+												exploreY = exploreY - 1
+											}
+										} else {
+											exploreY = exploreY - 1
+										}
+						 }
 					}
-					 transition(edgeName="t11",targetState="checkObstacle",cond=whenEvent("virtualobstacle"))
+					 transition( edgeName="goto",targetState="doPlannedMoves", cond=doswitchGuarded({(!radiusFinished && !itunibo.planner.plannerUtil.isFullyExplored())}) )
+					transition( edgeName="goto",targetState="exploreNextRadius", cond=doswitchGuarded({! (!radiusFinished && !itunibo.planner.plannerUtil.isFullyExplored())}) )
 				}	 
-				state("checkObstacle") { //this:State
+				state("doPlannedMoves") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("virtualobstacle(OBJNAME)"), Term.createTerm("virtualobstacle(OBJNAME)"), 
+					}
+					 transition( edgeName="goto",targetState="doMove", cond=doswitchGuarded({(itunibo.planner.plannerUtil.hasPlannedMoves())}) )
+					transition( edgeName="goto",targetState="doExplore", cond=doswitchGuarded({! (itunibo.planner.plannerUtil.hasPlannedMoves())}) )
+				}	 
+				state("doMove") { //this:State
+					action { //it:State
+						delay(500) 
+						var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()
+						println("-----")
+						println("doMove: move is $CmdPayload")
+						println("-----")
+						itunibo.planner.plannerUtil.doMove( CmdPayload  )
+						if(CmdPayload == "w"){ request("onestep", "onestep($StepDuration)" ,"steprobot" )  
+						 }
+						if(CmdPayload == "a"){ forward("cmd", "cmd(l)" ,"basicrobot" ) 
+						forward("moveOk", "moveOk(OK)" ,"detector" ) 
+						 }
+						if(CmdPayload == "d"){ forward("cmd", "cmd(r)" ,"basicrobot" ) 
+						forward("moveOk", "moveOk(OK)" ,"detector" ) 
+						 }
+					}
+					 transition(edgeName="t14",targetState="doPlannedMoves",cond=whenDispatch("moveOk"))
+					transition(edgeName="t15",targetState="doPlannedMoves",cond=whenReply("stepdone"))
+					transition(edgeName="t16",targetState="onStepFail",cond=whenReply("stepfail"))
+				}	 
+				state("onStepFail") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("stepfail(DURATION,CAUSE)"), Term.createTerm("stepfail(DURATION,CAUSE)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								  
-											  IsBottle = payloadArg(0).startsWith("bottle")
-								if(IsBottle){ forward("cmd", "cmd(${payloadArg(0)})" ,"basicrobot" ) 
+								IsBottle = payloadArg(1).startsWith("bottle")
+								if(IsBottle){ val StepTimeLeft = StepDuration - payloadArg(0).toLong()
+								forward("cmd", "cmd(${payloadArg(1)})" ,"basicrobot" ) 
 								delay(100) 
 								forward("cmd", "cmd(h)" ,"basicrobot" ) 
 								forward("updateBottle", "updateBottle(1)" ,"detectorbox" ) 
-								println("Bottle removed!")
+								request("onestep", "onestep($StepTimeLeft)" ,"steprobot" )  
+								println("onStepFail: bottle, step of duration $StepTimeLeft")
 								 }
 								else
 								 { forward("cmd", "cmd(h)" ,"basicrobot" ) 
-								 println("Stop for safety, obstacle not bottle!")
+								 itunibo.planner.plannerUtil.setRobotPositionAsObstacle(  )
+								 itunibo.planner.plannerUtil.stepBack(  )
+								 println("onStepFail: stepbackwards of duration ${payloadArg(0)}")
+								 request("onestepbackwards", "onestepbackwards(${payloadArg(0)})" ,"steprobot" )  
 								  }
 						}
-						IsBottle = false
 					}
-					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+					 transition(edgeName="t17",targetState="afterStepFail",cond=whenReply("stepdone"))
+				}	 
+				state("afterStepFail") { //this:State
+					action { //it:State
+					}
+					 transition( edgeName="goto",targetState="doPlannedMoves", cond=doswitchGuarded({(IsBottle)}) )
+					transition( edgeName="goto",targetState="doExplore", cond=doswitchGuarded({! (IsBottle)}) )
 				}	 
 			}
 		}

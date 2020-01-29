@@ -15,10 +15,18 @@ Dispatch cmd  : cmd(X)
 Dispatch updateBottle  : updateBottle(X)
 Request  explore   :  explore(X)
 Reply    exploreAck  :  exploreAck(V)
+Dispatch backHome: backHome(X)
 
 Dispatch collect: collect(X)
+Dispatch moveOk: moveOk(X)
+Request  onestep   :  onestep(DURATION)	//internal
+Request onestepbackwards: onestepbackwards(DURATION)
+
+Reply    stepdone  :  stepdone(V)  
+Reply    stepfail  :  stepfail(DURATION, CAUSE)
  
 Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
+
 
 Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt
 Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] //+mqtt
@@ -28,8 +36,18 @@ ExternalQActor basicrobot context ctxBasicRobot
 ExternalQActor plasticbox context ctxPlasticBox  
     
 QActor detector context ctxWroom{
-[" 
+["
+val StepDuration = 400L
 var IsBottle     = false
+var radius = 0
+var exploreX = 0
+var exploreY = 0
+var radiusFinished = false
+var hasPlannedMoves = false
+var exploringHorizontal = true
+var CurrentCommand = \"\"
+var goToHome = false
+var unexploredPosition: Pair<Int,Int>? = null
 "]  	
 	State s0 initial{
 		println("detector starting...")
@@ -38,40 +56,181 @@ var IsBottle     = false
 	}
 	Goto work
 	
-	State work{} 
-	Transition t0 
- 			whenRequest explore -> doExplore
+	State work{
+		println("")
+		println("")
+		println("")
+		println("work::: CurrentMap is:")
+		["goToHome = false"]
+		run itunibo.planner.plannerUtil.showMap()
+	} 
+	Transition t0 whenRequest explore -> startExplore
   			
 
-  	State doExplore{
+  	State startExplore{
   		printCurrentMessage
+  		run itunibo.planner.plannerUtil.initAI()
   		replyTo explore with exploreAck : exploreAck(OK)
-  		forward basicrobot -m cmd : cmd(w)
+//  		forward basicrobot -m cmd : cmd(w)
+		["radius = 0"]
   	}
-  	Transition t1
-  		whenEvent virtualobstacle -> checkObstacle
-  		
+  	Goto exploreNextRadius
   	
-	State checkObstacle{ //REQUIREMENT req-onestep-time, req-onestep-info
-		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
-			["  
-			  IsBottle = payloadArg(0).startsWith(\"bottle\")
-			"] 			
+  	State gotoUnexplored {
+  		println("gotoUnexplored")
+  		["	radiusFinished = true
+			unexploredPosition = itunibo.planner.plannerUtil.getFirstNonExploredPosition()
+		"]
+  		if "unexploredPosition != null && goToHome" {
+  			run itunibo.planner.plannerUtil.setGoal("${unexploredPosition!!.first}","${unexploredPosition!!.second}")
+			run itunibo.planner.plannerUtil.doPlan()
+			
+  		} else {
+  			["goToHome = true"]
+  		}
+  	}
+  	Goto doPlannedMoves if "(unexploredPosition != null)" else goHome
+
+	State goHome {
+		run itunibo.planner.plannerUtil.setGoal("0", "0")
+		run itunibo.planner.plannerUtil.doPlan()
+	} 
+	Goto executeHomeMove
+ 	 
+ 	State executeHomeMove {
+ 		if "(itunibo.planner.plannerUtil.isRobotHome())" {
+ 			forward detector -m backHome : backHome( OK )
+ 		}
+		else {
+	
+	 		delay 500
+			["var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()"]
+			run itunibo.planner.plannerUtil.doMove(CmdPayload)
+			if "CmdPayload == \"w\"" {
+				//TODO Step		
+				request steprobot -m onestep : onestep($StepDuration)
+			} 
+			if "CmdPayload == \"a\"" {
+				forward basicrobot -m cmd : cmd( l )	
+				forward detector -m moveOk : moveOk(OK)
+			} 
+			if "CmdPayload == \"d\"" {
+				forward basicrobot -m cmd : cmd( r )	
+				forward detector -m moveOk : moveOk(OK)
+			}
+		} 
+ 	}
+	Transition t1 
+		whenMsg backHome -> work
+		whenMsg moveOk -> executeHomeMove
+		whenReply stepdone -> executeHomeMove
+//		whenReply stepfail -> goHome
+	 	
+ 	 
+  	State exploreNextRadius {
+  		println("")
+  		println("------------")
+  		println("exploreNextRadius: $radius")
+		["
+			radius = radius + 1
+			radiusFinished = false
+			exploreY = radius
+			exploreX = 0
+			exploringHorizontal = true
+		"]
+	}
+//	Goto doExplore if "(radius < 5)" else work
+	Goto doExplore if "(!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)" else gotoUnexplored
+	
+	
+	State doExplore {
+		["if (exploreY < 0) { radiusFinished = true }"]
+		
+		
+		if "(!radiusFinished)" {
+			println("")
+			println("doExplore: currentMap:")
+			run itunibo.planner.plannerUtil.showMap()
+			println("doExplore goal: ($exploreX,$exploreY)")
+			run itunibo.planner.plannerUtil.setGoal("$exploreX","$exploreY")
+			run itunibo.planner.plannerUtil.doPlan()
+			["
+				if (exploringHorizontal) {
+					if (exploreX < radius) { exploreX = exploreX + 1 }
+					else { 
+						exploringHorizontal = false 
+						exploreY = exploreY - 1
+					}
+				} else {
+					exploreY = exploreY - 1
+				}
+			"]
+		}
+	}
+	Goto doPlannedMoves if "(!radiusFinished && !itunibo.planner.plannerUtil.isFullyExplored())" else exploreNextRadius
+	
+	State doPlannedMoves { 
+//		delay 500
+	} 
+	Goto doMove if "(itunibo.planner.plannerUtil.hasPlannedMoves())" else doExplore
+	
+	State doMove {
+		delay 500
+		["var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()"]
+		
+		println("-----")
+		println("doMove: move is $CmdPayload")
+		println("-----")
+		run itunibo.planner.plannerUtil.doMove(CmdPayload)
+		if "CmdPayload == \"w\"" {
+			//TODO Step		
+			request steprobot -m onestep : onestep($StepDuration)
+		} 
+		if "CmdPayload == \"a\"" {
+			forward basicrobot -m cmd : cmd( l )	
+			forward detector -m moveOk : moveOk(OK)
+		} 
+		if "CmdPayload == \"d\"" {
+			forward basicrobot -m cmd : cmd( r )	
+			forward detector -m moveOk : moveOk(OK)
+		}
+		
+	}
+	Transition t1 
+//		whenEvent virtualobstacle -> handleObstacle	
+		whenMsg moveOk -> doPlannedMoves
+		whenReply stepdone -> doPlannedMoves
+		whenReply stepfail -> onStepFail
+
+	
+	
+	
+	State onStepFail {
+		onMsg( stepfail : stepfail( DURATION, CAUSE )) {		
+			["IsBottle = payloadArg(1).startsWith(\"bottle\")"]
  			if "IsBottle" {  //remove the bottle
- 				forward basicrobot -m cmd : cmd( $payloadArg(0) )
+ 				["val StepTimeLeft = StepDuration - payloadArg(0).toLong()"]
+ 				forward basicrobot -m cmd : cmd( $payloadArg(1) )
  				delay 100  //give time to remove  the object payloadArg(1) TODO: request?
  				forward basicrobot -m cmd : cmd(h)
  				forward detectorbox -m updateBottle : updateBottle(1)
- 				println("Bottle removed!")
+	 			request steprobot -m onestep: onestep($StepTimeLeft)
+ 				println("onStepFail: bottle, step of duration $StepTimeLeft")
+ 				
+// 				println("Bottle removed!")
     		} else{
- 				forward basicrobot -m cmd : cmd(h)   		
- 				println("Stop for safety, obstacle not bottle!")	
+ 				forward basicrobot -m cmd : cmd(h)		
+				run itunibo.planner.plannerUtil.setRobotPositionAsObstacle()			
+	 			run itunibo.planner.plannerUtil.stepBack()
+	 			println("onStepFail: stepbackwards of duration ${payloadArg(0)}")
+	 			request steprobot -m onestepbackwards : onestepbackwards($payloadArg(0))	
  			}
 		}
-		["IsBottle = false"] 
-   	}
-	Goto work 
-	
+	}
+	Transition t1 whenReply stepdone -> afterStepFail
+
+	State afterStepFail {} 
+	Goto doPlannedMoves if "(IsBottle)" else doExplore
 }
 
 QActor detectorbox context ctxWroom{
@@ -119,4 +278,115 @@ QActor detectorbox context ctxWroom{
 	}
 	
  }
+ 
+ 
+ QActor steprobot context ctxWroom {
+[" 
+var foundObstacle = false
+var StepTime      = 0L
+var StepBackwardsTime      = 0L
+var Duration      = 0 
+
+var TimeToEndStep = 0L  
+var IsBottle      = false
+"]  	
+	State s0 initial{
+ 		println("steprobot starts")	
+	}
+	Goto activateResource 
+	
+	State activateResource{  
+//	   run kotlincode.resServer.init(myself)
+//	   run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+// 	   run kotlincode.resourceObserver.init("coap://127.0.0.1:5683","robot/pos")
+		//run kotlincode.coapSupport.readResource(myself, "robot/pos") 
+		//run kotlincode.coapSupport.readResource(myself, "robot/sonar")
+// 		run consolegui.consoleGui.create()	//AFTER Resource creation
+	}
+	Goto work 
+	
+	State work{	} 
+	Transition s0 
+ 			whenMsg cmd        -> handleCmd
+ 			whenRequest onestep -> doStep
+			whenRequest onestepbackwards -> doStepBackwards
+ 
+  
+ /* 
+  * REQUIREMENT req-cmd: redirection
+  */
+	State handleCmd {
+		//printCurrentMessage 
+		onMsg( cmd : cmd(X) ){ 
+			["var Move = payloadArg(0)"]
+			forward basicrobot -m cmd : cmd( $Move )
+//			run kotlincode.coapSupport.updateResource(myself, "robot/pos", "u$Move")
+		}
+	} Goto work 
+
+ /*
+  * ---------------------------------------------------------------------------
+  * REQUIREMENT req-onestep 
+  * ---------------------------------------------------------------------------
+  */ 
+  
+	State doStep{ 
+ 		//printCurrentMessage  
+		onMsg( onestep : onestep( T ) ){
+			["StepTime = payloadArg(0).toLong() 
+ 			  startTimer()"]	//REQUIREMENT req-onestep-time
+			//println("smartrobot | doStep StepTime =$StepTime ")
+			forward basicrobot -m cmd : cmd( w )  //ATTEMPT TO MOVE ...
+		}  
+	}  
+	Transition t0 
+		whenTimeVar StepTime  -> stepDone	  
+ 	    whenEvent virtualobstacle -> stepFailVirtual 
+//		whenEvent obstacle    -> stepFail
+ 	
+ 	State doStepBackwards {
+ 		onMsg ( onestepbackwards: onestepbackwards(T) ) {
+ 			["StepBackwardsTime = payloadArg(0).toLong() - 30
+			  startTimer()"]
+			  println("steprobot | doStepBackwards StepBackwardsTime =$StepBackwardsTime")
+		  	forward basicrobot -m cmd : cmd ( s )
+ 		}
+ 	}  
+	Transition t0 
+		whenTimeVar StepBackwardsTime  -> stepBackwardsDone
+		
+	State stepBackwardsDone {
+		forward basicrobot -m cmd : cmd( h )
+		replyTo onestepbackwards with stepdone : stepdone(ok)
+	}
+	Goto work
+ 	
+	State stepDone{  //REQUIREMENT  req-onestep-info
+		forward basicrobot -m cmd : cmd( h ) 
+//		run kotlincode.coapSupport.updateResource(myself, "robot/pos", "up")
+ 		replyTo onestep with stepdone : stepdone(ok)
+  	}
+	Goto work
+	 
+//	State stepFail{ //REQUIREMENT req-onestep-time, req-onestep-info
+//		["Duration=getDuration()"]  
+//		//getDuration(): built-in (with ref. to startTimer)
+//		replyTo onestep with stepfail : stepfail($Duration, obstacle)
+//		//println("smartrobot | stepFail Duration=$Duration ")
+//   	}
+//	Goto work 
+
+	State stepFailVirtual{ //REQUIREMENT req-onestep-time, req-onestep-info
+		[" Duration=getDuration()
+		  TimeToEndStep = StepTime - Duration
+		"]
+		
+		forward basicrobot -m cmd : cmd( h )
+		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
+			replyTo onestep with stepfail : stepfail($Duration, $payloadArg(0))
+		} 
+   	}
+	Goto work 
+  
+}
  

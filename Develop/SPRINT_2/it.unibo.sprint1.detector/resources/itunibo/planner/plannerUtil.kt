@@ -105,7 +105,36 @@ object plannerUtil {
     fun getActions() : List<Action>{
         return actions!!
     }
- 
+	
+	fun getNextPlannedMove(): String {
+//		println("get next planned move: ${actions!!.first()}")
+//		println("get remaining planned moves: ${actions!!.drop(1)}")
+		
+		return (actions as MutableList).removeAt(0).toString()
+	}
+	
+	fun hasPlannedMoves(): Boolean {
+		if (actions!!.size == 1 && actions!!.first().isNoOp()) {
+			return false
+		}
+		return actions != null && actions!!.size > 0
+	}
+	
+	fun setRobotPositionAsObstacle() {
+		RoomMap.getRoomMap().put(initialState!!.x, initialState!!.y, Box(true, false, false))
+	}
+	
+	
+	fun stepBack() {
+		initialState = initialState!!.backward() 
+		try {
+			RoomMap.getRoomMap().put(initialState!!.x, initialState!!.y, Box(false, false, true))
+		} catch (e: Exception) {
+			e.printStackTrace()
+			println("exception for initialState $initialState")
+		}
+	}
+	
     @Throws(Exception::class)
     fun doPlan(): List<Action>? {
         //var actions: List<Action>?
@@ -147,6 +176,19 @@ object plannerUtil {
             plannerUtil.doMove(iter.next().toString())
         }
     }
+	
+	fun isFullyExplored(): Boolean {
+		return RoomMap.getRoomMap().isFullyExplored()
+	}
+	
+	fun getFirstNonExploredPosition(): Pair<Int, Int>? {
+		return RoomMap.getRoomMap().getFirstNonExploredPosition()
+	}
+	
+	fun isRobotHome(): Boolean {
+		return initialState!!.x == 0 && initialState!!.y == 0
+	}
+
 
 
 /*

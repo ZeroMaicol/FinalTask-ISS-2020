@@ -32,7 +32,7 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 				state("work") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t02",targetState="updateBottleResource",cond=whenDispatch("updateBottle"))
+					 transition(edgeName="t08",targetState="updateBottleResource",cond=whenDispatch("updateBottle"))
 				}	 
 				state("updateBottleResource") { //this:State
 					action { //it:State

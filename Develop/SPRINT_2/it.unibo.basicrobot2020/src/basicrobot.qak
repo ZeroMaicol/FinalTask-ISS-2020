@@ -37,8 +37,8 @@ QActor basicrobot context ctxBasicRobot{
  
 //val filter   = itunibo.robot.rx.sonaractorfilter(\"filter\", myself)  //generates obstacle
 //val logger   = itunibo.robot.rx.Logger(\"logger\")
-val forradar = itunibo.robot.rx.sonarforradar(\"forradar\", myself)  //generates polar
-itunibo.robot.robotSupport.subscribe( forradar ) 
+//val forradar = itunibo.robot.rx.sonarforradar(\"forradar\", myself)  //generates polar
+//itunibo.robot.robotSupport.subscribe( forradar ) 
 "]  
 		println("	basicrobot | starts (with robotadapter in the same context)")
 	}
@@ -75,16 +75,16 @@ itunibo.robot.robotSupport.subscribe( forradar )
  * Introduced after problem analysis
  */	
 	State handleObstacle{
-		forward robotadapter -m cmd : cmd( h )
-		println("	basicrobot | stops (for safety) since  obstacle  ")
+//		forward robotadapter -m cmd : cmd( h )
+//		println("	basicrobot | stops (for safety) since  obstacle  ")
  	}
  	Goto movefarFromObstacle 	//Added after introducing the real robot
 
 	State movefarFromObstacle{
-		println("	basicrobot | going back (to avoid event-generation) ")
- 		forward robotadapter -m cmd : cmd( s )
-		delay 100
-		forward robotadapter -m cmd : cmd( h )
+//		println("	basicrobot | going back (to avoid event-generation) ")
+// 		forward robotadapter -m cmd : cmd( s )
+//		delay 100
+//		forward robotadapter -m cmd : cmd( h )
 	}
 	Goto work	 
 }  
