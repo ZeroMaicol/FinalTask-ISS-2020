@@ -9,8 +9,6 @@ import org.eclipse.californium.core.CoapServer
 import it.unibo.kactor.ActorBasic
 import it.unibo.kactor.MsgUtil
 import kotlinx.coroutines.launch
-import itunibo.planner.plannerUtil
-import itunibo.planner.moveUtils
 
 
 class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name ){

@@ -29,6 +29,11 @@ lateinit var host   : String
 		//println("coapSupport | updateResource respCode=${resp.getCode()}")
 	}
 	
+	fun updateDetectorPosition(pos:String, direction:String, moving:String){
+		setClientForPath( "wroom/detectorPosition" )
+		val resp : CoapResponse = client.put(pos+"."+direction+"."+moving, MediaTypeRegistry.TEXT_PLAIN)
+	}
+	
 	fun readResource(  owner : ActorBasic, path : String ){
 		setClientForPath( path )
 		val respGet : CoapResponse = client.get( )

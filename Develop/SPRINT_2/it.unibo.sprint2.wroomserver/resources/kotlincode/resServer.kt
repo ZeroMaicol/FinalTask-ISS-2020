@@ -10,6 +10,8 @@ object resServer{
 				 resWroom(owner,  "wroom")
 					 .add(resDetectorBox(owner, "detectorBox"))
 					 .add(resPlasticBox(owner, "plasticBox"))
+					 .add(resRoomMap(owner,"roomMap"))
+					 .add(resDetectorPosition(owner,"detectorPosition"))
 			)
 			server.start();			
 		}
