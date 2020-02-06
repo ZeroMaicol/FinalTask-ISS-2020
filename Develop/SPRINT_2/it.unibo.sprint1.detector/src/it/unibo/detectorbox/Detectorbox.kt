@@ -15,24 +15,28 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
-		var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+		
+			var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+			var NDB:Int = 0
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
 						println("detectorBox started: initializing resource value...")
 						kotlincode.coapSupport.init( "coap://localhost:5683"  )
-						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "NDB=5" )
+						NDB = detector.detectorSupport.NDB
+						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "NDB=$NDB" )
 						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
 						val Bottles = Result.get(1)
-								  val NDB = Result.get(2)
-						println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB")
+								  val ndb = Result.get(2)
+						println("Resource correctly initialized: bottles=$Bottles, NDB=$ndb")
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 
 				state("work") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t08",targetState="updateBottleResource",cond=whenDispatch("updateBottle"))
+					 transition(edgeName="t014",targetState="updateBottleResource",cond=whenDispatch("updateBottle"))
+					transition(edgeName="t015",targetState="emptyBottleResource",cond=whenDispatch("emptyBottleResource"))
 				}	 
 				state("updateBottleResource") { //this:State
 					action { //it:State
@@ -41,25 +45,16 @@ class Detectorbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 								kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "1" )
 						}
 					}
-					 transition( edgeName="goto",targetState="checkPlasticBoxBottles", cond=doswitch() )
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 
-				state("checkPlasticBoxBottles") { //this:State
+				state("emptyBottleResource") { //this:State
 					action { //it:State
-						println("detectorBox checks if can put bottles inside the plasticBox")
-						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
-						val bottlesInDetector : Int? = Result.get(1)
-						kotlincode.coapSupport.readPlasticBox( "wroom/plasticBox", Result  )
-							val bottlesInPlasticBox : Int? = Result.get(1)
-									val NPB : Int? = Result.get(2)
-									val totalBottles : Int? = if(bottlesInPlasticBox != null && bottlesInDetector != null) bottlesInPlasticBox.plus(bottlesInDetector) else 10
-						if(compareValues(NPB, totalBottles) > 0){ println("detector put the bottle into the plasticBox")
-						kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "0" )
-						forward("collect", "collect(bottlesInDetector)" ,"plasticbox" ) 
-						 }
-						else
-						 { println("detector has found the plasticBox full of bottles, ew what to do ...")
-						  }
+						if( checkMsgContent( Term.createTerm("emptyBottleResource(X)"), Term.createTerm("emptyBottleResource(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								kotlincode.coapSupport.updateResource(myself ,"wroom/detectorBox", "0" )
+						}
 					}
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 
 			}
 		}
