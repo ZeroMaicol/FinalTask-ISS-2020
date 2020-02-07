@@ -33,6 +33,7 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 						println("detector starting...")
 						delay(2000) 
 						println("detector started!")
+						kotlincode.coapSupport.observeCommands(myself)
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 

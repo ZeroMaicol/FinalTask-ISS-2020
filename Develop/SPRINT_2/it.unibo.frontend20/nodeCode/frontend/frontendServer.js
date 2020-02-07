@@ -42,8 +42,8 @@ main();
 
 function main() {
  	//console.log("frontendServer | coapAddress=" + String(process.argv[2]) );
-    const coapAddr = String(process.argv[2])
-    coap.setcoapAddr( coapAddr )
+//    const coapAddr = String(process.argv[2])
+//    coap.setcoapAddr( coapAddr )
     
      
     createServer( 8080 );     

@@ -5,7 +5,7 @@ const handle           = require('./qakeventHandler');
 const coap             = require("node-coap-client").CoapClient; 
 //var coapAddr           = "coap://192.168.1.8:5683"	//RESOURCE ON RASPBERRY PI
 var coapAddr             = "coap://localhost:5683"
-var coapResourceAddr   	 = coapAddr + "/robot/pos"
+var coapResourceAddr   	 = coapAddr + "/wroom/robotCommand"
 var sensorResourceAddr   = coapAddr + "/robot/sonar"
 /*
 coap

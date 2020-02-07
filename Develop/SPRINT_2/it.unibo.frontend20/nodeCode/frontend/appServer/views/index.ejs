@@ -24,6 +24,7 @@ socket.on( 'message', function(v){
   //if( v.indexOf("polar")     >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
 
 });
+
 </script>
  
 </head>
@@ -43,13 +44,13 @@ that emits modelChange
 	<table>
 		<tr>
 			<td align="center">
-				<form action="/e" method="post">
+				<form id="formExplore" action="/explore" method="post">
 					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:5px" value="Explore" >
 				</form>	
-				<form action="/suspend" method="post">
+				<form id="formSuspend" action="/suspend" method="post">
 					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:5px" value="Suspend" >
 				</form>
-				<form action="/terminate" method="post">	
+				<form id="formTerminate" action="/terminate" method="post">
 					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:30px" value="Terminate" >
 				</form>
 			</td>
@@ -145,5 +146,23 @@ that emits modelChange
   	</div>
 </div>
 <center></center>
+
+<script>
+function handleForm(event, url) {
+  event.preventDefault();
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", url, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send();
+}
+var form = document.getElementById("formExplore");
+form.addEventListener('submit', (event) => handleForm(event, "/explore"));
+form = document.getElementById("formSuspend");
+form.addEventListener('submit', (event) => handleForm(event, "/suspend"));
+form.addEventListener('submit', handleForm);
+form = document.getElementById("formTerminate");
+form.addEventListener('submit', (event) => handleForm(event, "/terminate"));
+
+</script>
 </body>
 </html>

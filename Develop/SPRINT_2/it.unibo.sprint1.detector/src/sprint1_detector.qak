@@ -53,6 +53,8 @@ var unexploredPosition: Pair<Int,Int>? = null
 		println("detector starting...")
 		delay 2000
  		println("detector started!")
+ 		
+ 		run kotlincode.coapSupport.observeCommands(myself)
 	}
 	Goto work
 	

@@ -11,6 +11,6 @@ object resServer{
 					 .add(resDetectorBox(owner, "detectorBox"))
 					 .add(resPlasticBox(owner, "plasticBox"))
 			)
-			server.start();			
+			server.start();
 		}
 }

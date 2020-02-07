@@ -64,13 +64,14 @@ app.get('/', function(req, res) {
  app.post("/r", function(req, res,next) { handlePostMove("r","moving right90",   req,res,next); });
  app.post("/z", function(req, res,next) { handlePostMove("z","moving leftstep",  req,res,next); });  
  app.post("/x", function(req, res,next) { handlePostMove("x","moving rightstep", req,res,next); }); 
- app.post("/h", function(req, res,next) { handlePostMove("h","stopped",          req,res,next); });	
+ app.post("/h", function(req, res,next) { handlePostMove("h","stopped",          req,res,next); });
+
+
+app.post("/explore", function(req, res,next) { handlePostCommand("explore","explore",          req,res,next); });
+app.post("/suspend", function(req, res,next) { handlePostCommand("suspend","suspend",          req,res,next); });
+app.post("/terminate", function(req, res,next) { handlePostCommand("terminate","suspend",          req,res,next); });
  
- app.post("/e", function(req, res,next) { handlePostExplore("e","explore",          req,res,next); });	
- app.post("/suspend", function(req, res,next) { handlePostSuspend("suspend","suspend",          req,res,next); });
- app.post("/terminate", function(req, res,next) { handlePostTerminate("terminate","terminate",          req,res,next); });	 
- 
- app.post("/q", function(req, res,next) { handlePostMove("q","pick up",          req,res,next); });	
+ app.post("/q", function(req, res,next) { handlePostCommand("q","pick up",          req,res,next); });
 
  	
 //APPLICATION
@@ -79,24 +80,12 @@ app.get('/', function(req, res) {
  app.post("/k", function(req, res,next) { handlePostMove( "k", "stepstop", req, res ,next)});	
  app.post("/b", function(req, res,next) { handlePostMove( "b", "boundary", req, res ,next)});	
 		 
- 
- function handlePostExplore( cmd, msg, req, res, next ) {
-	result = "applCode | Web server done: " + cmd
-	publishExploreRequestToDetector( cmd )
-	next();
- }
- 
-function handlePostSuspend( cmd, msg, req, res, next ) {
-	result = "applCode | Web server done: " + cmd
-	publishSuspendRequestToDetector( cmd )
-	next();
- }
- 
-function handlePostTerminate( cmd, msg, req, res, next ) {
-	result = "applCode | Web server done: " + cmd
-	publishTerminateRequestToDetector( cmd )
-	next();
- }
+
+function handlePostCommand( cmd, msg, req, res, next) {
+  result = "applCode | Web server: done " + cmd
+  changeResourceModelCoap (cmd)
+  next()
+}
 
 function handlePostMove( cmd, msg, req, res, next ){
 	result = "applCode | Web server done: " + cmd

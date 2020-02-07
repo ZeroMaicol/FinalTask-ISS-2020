@@ -11,14 +11,15 @@ import it.unibo.kactor.MsgUtil
 import kotlinx.coroutines.launch
 import itunibo.planner.plannerUtil
 import itunibo.planner.moveUtils
+import org.eclipse.californium.core.coap.CoAP
 
 
 enum class State( ){
-	EXPLORE, SUSPEND
+	EXPLORE, SUSPEND, TERMINATE, HOME
 }
 
-class resDetectorState( val owner: ActorBasic, name : String) : CoapResource( name ){
-	var state  = State.SUSPEND
+class resRobotCommand(name : String) : CoapResource( name ){
+	var state  = State.HOME
 	
 	init{
 		setObservable(true)
@@ -29,18 +30,23 @@ class resDetectorState( val owner: ActorBasic, name : String) : CoapResource( na
 		exchange.respond( "$state" )  // moving=$moving" , $pos dir($direction)
 	}
 	override fun handlePUT( exchange : CoapExchange) {
+		val prevState = state
 		val msg = exchange.getRequestText()
 		//println("resource $name  | PUT: $msg")
 		when( msg ){
-			"e" ->  { state = State.EXPLORE;  sendExplore("explore")}
+			"explore" 	->  { state = State.EXPLORE }
+			"suspend" 	-> 	{ state = State.SUSPEND }
+			"terminate" ->	{ state = State.TERMINATE }
+			"home"		->  { state = State.HOME }
  			//else -> println("")
 		}
-		changed()	// notify all CoAp observers
+		if (prevState != state) {
+			changed()	// notify all CoAp observers
+		}
+		println("put: $msg")
  		exchange.respond(CHANGED)
 	}
 	
-	fun sendExplore(msg: String){
-		owner.scope.launch{ MsgUtil.sendMsg("cmd","cmd($msg)",owner) }
-	}
 	
+	private class UpdateTask
 }

@@ -15,7 +15,11 @@ class Plantester ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
-		var stepCounter = 0
+		
+		var radius = 0
+		var stepCounterX = 0
+		var stepCounterY = 0
+		var isFullyExplored = false
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -26,12 +30,50 @@ class Plantester ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						println("------------------------------------")
 						itunibo.planner.plannerUtil.startTimer(  )
 					}
-					 transition( edgeName="goto",targetState="exploreStep", cond=doswitch() )
+					 transition( edgeName="goto",targetState="exploreNextRadius", cond=doswitch() )
+				}	 
+				state("exploreNextRadius") { //this:State
+					action { //it:State
+						
+									radius = radius + 1
+									stepCounterY = radius
+									stepCounterX = 0
+									isFullyExplored = itunibo.planner.plannerUtil.isFullExplored()
+					}
+					 transition( edgeName="goto",targetState="exploreDown", cond=doswitchGuarded({(radius < 5)}) )
+					transition( edgeName="goto",targetState="endOfJob", cond=doswitchGuarded({! (radius < 5)}) )
+				}	 
+				state("exploreDown") { //this:State
+					action { //it:State
+						itunibo.planner.plannerUtil.setGoal( "$stepCounterX", "$stepCounterY"  )
+						itunibo.planner.plannerUtil.doPlan(  )
+						itunibo.planner.plannerUtil.executeMoves(  )
+						println("MAP AFTER EXPLORE STEP")
+						itunibo.planner.plannerUtil.showMap(  )
+						println("------------------------------------")
+						stepCounterX = stepCounterX + 1
+					}
+					 transition( edgeName="goto",targetState="exploreDown", cond=doswitchGuarded({(stepCounterX <= radius)}) )
+					transition( edgeName="goto",targetState="exploreLeft", cond=doswitchGuarded({! (stepCounterX <= radius)}) )
+				}	 
+				state("exploreLeft") { //this:State
+					action { //it:State
+						stepCounterX = radius
+						stepCounterY = stepCounterY - 1
+						itunibo.planner.plannerUtil.setGoal( "$stepCounterX", "$stepCounterY"  )
+						itunibo.planner.plannerUtil.doPlan(  )
+						itunibo.planner.plannerUtil.executeMoves(  )
+						println("MAP AFTER EXPLORE STEP")
+						itunibo.planner.plannerUtil.showMap(  )
+						println("------------------------------------")
+					}
+					 transition( edgeName="goto",targetState="exploreLeft", cond=doswitchGuarded({(stepCounterY > 0)}) )
+					transition( edgeName="goto",targetState="exploreNextRadius", cond=doswitchGuarded({! (stepCounterY > 0)}) )
 				}	 
 				state("exploreStep") { //this:State
 					action { //it:State
-						stepCounter = stepCounter + 1
-						itunibo.planner.plannerUtil.setGoal( "$stepCounter", "$stepCounter"  )
+						stepCounterX = stepCounterX + 1
+						itunibo.planner.plannerUtil.setGoal( "$stepCounterX", "$stepCounterX"  )
 						itunibo.planner.plannerUtil.doPlan(  )
 						itunibo.planner.plannerUtil.executeMoves(  )
 						println("MAP AFTER EXPLORE STEP")
@@ -49,8 +91,8 @@ class Plantester ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						itunibo.planner.plannerUtil.showMap(  )
 						println("------------------------------------")
 					}
-					 transition( edgeName="goto",targetState="exploreStep", cond=doswitchGuarded({(stepCounter < 4)}) )
-					transition( edgeName="goto",targetState="endOfJob", cond=doswitchGuarded({! (stepCounter < 4)}) )
+					 transition( edgeName="goto",targetState="exploreStep", cond=doswitchGuarded({(stepCounterX < 12)}) )
+					transition( edgeName="goto",targetState="endOfJob", cond=doswitchGuarded({! (stepCounterX < 12)}) )
 				}	 
 				state("endOfJob") { //this:State
 					action { //it:State
