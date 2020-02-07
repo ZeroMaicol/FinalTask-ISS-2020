@@ -7,25 +7,34 @@ import org.eclipse.californium.core.coap.CoAP.ResponseCode.CREATED;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode.DELETED;
 import org.eclipse.californium.core.CoapServer
 import it.unibo.kactor.ActorBasic
+import it.unibo.kactor.MsgUtil
+import kotlinx.coroutines.launch
 
-class resRobotSonar( val owner: ActorBasic, name : String) : CoapResource( name ){
-	var distance = "0";
+
+class resRoomMap( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var roomMap:String = ""
 	
 	init{
 		setObservable(true)
 		println("resource $name  | created  " );		
 	}
 	override fun handleGET( exchange : CoapExchange ) {
-		println(" $name  | GET: ${exchange.getRequestText()} distance=$distance")
-		exchange.respond( distance );
+		exchange.respond( "$roomMap ")  // moving=$moving" , $pos dir($direction)
 	}
- 
 	override fun handlePUT( exchange : CoapExchange) {
-		//println(" $name  | PUT: ${exchange.getRequestText()} distance=$distance")
-		distance = exchange.getRequestText()
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetMap() }
+	 		else -> {
+				roomMap = msg
+	 		} 
+		}
 		changed()	// notify all CoAp observers
-		exchange.respond(CHANGED)
+ 		exchange.respond(CHANGED)
 	}
- 
 	
+	fun resetMap(){
+		roomMap = ""
+	}
+
 }

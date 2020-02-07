@@ -38,6 +38,11 @@ lateinit var host   : String
 		//println("coapSupport | updateResource respCode=${resp.getCode()}")
 	}
 	
+	fun updateDetectorPosition(pos:String, direction:String, moving:String){
+		setClientForPath( "wroom/detectorPosition" )
+		val resp : CoapResponse = client.put(pos+"."+direction+"."+moving, MediaTypeRegistry.TEXT_PLAIN)
+	}
+
 	fun observeCommands(actor: ActorBasic) {
 		setClientForPath("wroom/robotCommand")
 		val relation = client.observe(ForwardCommandToActor(actor))

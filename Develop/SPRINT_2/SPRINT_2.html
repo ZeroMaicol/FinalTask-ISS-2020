@@ -381,7 +381,7 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 </tr>
 </tbody></table>
 
-
+AGGIUNGI QUI LE ALTRE RISORSE CHE MANCANO!!!
 
 
 <h3>The ProductBacklog</h3>
@@ -404,6 +404,103 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 </div>
 
 <h2>Project</h2> 
+<h3>Magic Numbers and the need of new adapters (Maicol)</h3>
+The detectorBox needs a constant value to be started: NDB.<br/>
+The plasticBox needs a constant value to be started: NPB.<br/>
+These values are related to the capacity of the bins that these actors represent.<br/>
+The problem is that if the bin is changed to another one, the main code must be modified to set the correct values.<br/>
+This is not an appropriate behaviour, as a consequence, a new adapter is created for each Box.<br/>
+The job of the adapters is to read a configuration file that contains all the info that are required to initialize the actors and create a support that store these informations.<br/>
+This change will also be relevant for future upgrades if more informations are needed to be configured.<br/><br/>
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The detectorAdapter (Maicol)</h4>
+<pre>
+class detectorAdapter( name : String ) : ActorBasic( name ){  
+    init{
+		println("	--- detectorAdapter | started")
+		val sol1 = pengine.solve( "consult('detectorConfig.pl')." )
+		if( ! sol1.isSuccess() ){
+			println("	--- detectorAdapter | ERROR in detectorConfig.pl")
+		}else{
+	 		val sol2 = pengine.solve( "detectorBox(NDB)." )
+	 		if( sol2.isSuccess() ){
+				val NDB =  sol2.getVarValue("NDB").toString()
+				println("	--- detectorAdapter | USING NDB: $NDB")
+				val NDB_Int = NDB.toInt()
+				detector.detectorSupport.create( NDB_Int )   
+			}
+		}		  		      
+    }
+    override suspend fun actorBody(msg : ApplMessage){
+        //println("	--- robotAdapterQaStream | received  msg= $msg "  ) //msg.msgContent()=cmd(X)
+		sysUtil.traceprintln(" $tt $name | received  $msg "  ) //msg.msgContent()=cmd(X)
+    }
+}
+</pre>
+</td>
+<td>
+<h4>The detectorSupport (Maicol)</h4>
+<pre>
+object detectorSupport{
+	var NDB  :  Int = 0
+	
+	fun create( ndb:Int ){
+		NDB = ndb
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table> 
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The plasticBoxAdapter (Maicol)</h4>
+<pre>
+class plasticBoxAdapter( name : String ) : ActorBasic( name ){  
+    init{
+		println("	--- plasticBoxAdapter | started")
+		val sol1 = pengine.solve( "consult('plasticBoxConfig.pl')." )
+		if( ! sol1.isSuccess() ){
+			println("	--- plasticBoxAdapter | ERROR in plasticBoxConfig.pl")
+		}else{
+	 		val sol2 = pengine.solve( "plasticBox(NPB)." )
+	 		if( sol2.isSuccess() ){
+				val NPB =  sol2.getVarValue("NPB").toString()
+				println("	--- plasticBoxAdapter | USING NPB: $NPB")
+				val NPB_Int = NPB.toInt()
+				plasticBox.plasticBoxSupport.create( NPB_Int )   
+			}
+		}		  		      
+    }
+ 
+    override suspend fun actorBody(msg : ApplMessage){
+        //println("	--- robotAdapterQaStream | received  msg= $msg "  ) //msg.msgContent()=cmd(X)
+		sysUtil.traceprintln(" $tt $name | received  $msg "  ) //msg.msgContent()=cmd(X)
+    }
+}
+</pre>
+</td>
+<td>
+<h4>The plasticBoxSupport (Maicol)</h4>
+<pre>
+object plasticBoxSupport{
+	var NPB  :  Int = 0
+	
+	fun create( npb:Int ){
+		NPB = npb
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table> 
+
 
 <h2>Testing</h2> 
 <div class="remark">

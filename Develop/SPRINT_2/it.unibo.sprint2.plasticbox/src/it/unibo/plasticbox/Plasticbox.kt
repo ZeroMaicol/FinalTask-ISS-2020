@@ -15,17 +15,20 @@ class Plasticbox ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
-		var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+		
+			var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+			var NPB:Int = 0
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
 						println("plasticBox started: initializing resource value...")
 						kotlincode.coapSupport.init( "coap://localhost:5683"  )
-						kotlincode.coapSupport.updateResource(myself ,"wroom/plasticBox", "NPB=10" )
+						NPB = plasticBox.plasticBoxSupport.NPB
+						kotlincode.coapSupport.updateResource(myself ,"wroom/plasticBox", "NPB=$NPB" )
 						kotlincode.coapSupport.readPlasticBox( "wroom/plasticBox", Result  )
 						val Bottles = Result.get(1)
-								  val NPB = Result.get(2)
-						println("Resource correctly initialized: bottles=$Bottles, NPB=$NPB")
+								  val npb = Result.get(2)
+						println("Resource correctly initialized: bottles=$Bottles, NPB=$npb")
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 

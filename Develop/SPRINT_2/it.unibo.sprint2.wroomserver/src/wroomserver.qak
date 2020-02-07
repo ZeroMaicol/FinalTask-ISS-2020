@@ -16,7 +16,6 @@ QActor wroomserver context ctxWroom{
 	State s0 initial{
 		println("STARTING SERVER AND RESOURCES")
 		run kotlincode.resServer.init(myself)
-	  	run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
 	}
 	Goto work
 	State work {}

@@ -16,6 +16,8 @@ object resServer{
 					 .add(resDetectorBox(owner, "detectorBox"))
 					 .add(resPlasticBox(owner, "plasticBox"))
 					 .add(resRobotCommand("robotCommand"))
+					 .add(resRoomMap(owner,"roomMap"))
+					 .add(resDetectorPosition(owner,"detectorPosition"))
 			)
 			server.start();			
 		}

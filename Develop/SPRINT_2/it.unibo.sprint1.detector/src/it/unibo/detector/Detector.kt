@@ -27,6 +27,10 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 		var CurrentCommand = ""
 		var goToHome = false
 		var unexploredPosition: Pair<Int,Int>? = null
+		var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+		var emptyTheDetectorBox = false
+		var beforeEmptyPos_x = -1
+		var beforeEmptyPos_y = -1
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -81,7 +85,11 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 				}	 
 				state("executeHomeMove") { //this:State
 					action { //it:State
-						if((itunibo.planner.plannerUtil.isRobotHome())){ forward("backHome", "backHome(OK)" ,"detector" ) 
+						if((itunibo.planner.plannerUtil.isRobotHome())){ if(emptyTheDetectorBox){ forward("detectorBoxIsFull", "detectorBoxIsFull(OK)" ,"detector" ) 
+						 }
+						else
+						 { forward("backHome", "backHome(OK)" ,"detector" ) 
+						  }
 						 }
 						else
 						 { delay(500) 
@@ -100,6 +108,21 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 					 transition(edgeName="t11",targetState="work",cond=whenDispatch("backHome"))
 					transition(edgeName="t12",targetState="executeHomeMove",cond=whenDispatch("moveOk"))
 					transition(edgeName="t13",targetState="executeHomeMove",cond=whenReply("stepdone"))
+					transition(edgeName="t14",targetState="executeEmptyDetectorBox",cond=whenDispatch("detectorBoxIsFull"))
+				}	 
+				state("executeEmptyDetectorBox") { //this:State
+					action { //it:State
+						println("executeEmptyDetectorBox")
+						kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
+						val BottlesInDetector = Result.get(1) !!
+						forward("emptyBottleResource", "emptyBottleResource(0)" ,"detectorbox" ) 
+						forward("collect", "collect($BottlesInDetector)" ,"plasticbox" ) 
+						emptyTheDetectorBox = false
+						goToHome = false
+						itunibo.planner.plannerUtil.setGoal( "$beforeEmptyPos_x", "$beforeEmptyPos_y"  )
+						itunibo.planner.plannerUtil.doPlan(  )
+					}
+					 transition( edgeName="goto",targetState="doPlannedMoves", cond=doswitch() )
 				}	 
 				state("exploreNextRadius") { //this:State
 					action { //it:State
@@ -163,9 +186,9 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 						forward("moveOk", "moveOk(OK)" ,"detector" ) 
 						 }
 					}
-					 transition(edgeName="t14",targetState="doPlannedMoves",cond=whenDispatch("moveOk"))
-					transition(edgeName="t15",targetState="doPlannedMoves",cond=whenReply("stepdone"))
-					transition(edgeName="t16",targetState="onStepFail",cond=whenReply("stepfail"))
+					 transition(edgeName="t15",targetState="doPlannedMoves",cond=whenDispatch("moveOk"))
+					transition(edgeName="t16",targetState="doPlannedMoves",cond=whenReply("stepdone"))
+					transition(edgeName="t17",targetState="onStepFail",cond=whenReply("stepfail"))
 				}	 
 				state("onStepFail") { //this:State
 					action { //it:State
@@ -189,13 +212,41 @@ class Detector ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sc
 								  }
 						}
 					}
-					 transition(edgeName="t17",targetState="afterStepFail",cond=whenReply("stepdone"))
+					 transition(edgeName="t18",targetState="afterStepFail",cond=whenReply("stepdone"))
 				}	 
 				state("afterStepFail") { //this:State
 					action { //it:State
+						if(IsBottle){ kotlincode.coapSupport.readDetectorBox( "wroom/detectorBox", Result  )
+						val BottlesInDetector = Result.get(1) !!
+									  val NDB = Result.get(2)
+						if((compareValues(NDB, BottlesInDetector) == 0)){ kotlincode.coapSupport.readPlasticBox( "wroom/plasticBox", Result  )
+						val bottlesInPlasticBox = Result.get(1) !!
+										  val NPB = Result.get(2)
+										  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)
+						if(compareValues(NPB, totalBottles) >= 0){ beforeEmptyPos_x = 
+						itunibo.planner.plannerUtil.getPosX(  )
+						beforeEmptyPos_y = 
+						itunibo.planner.plannerUtil.getPosY(  )
+						goToHome = true
+											  emptyTheDetectorBox = true
+						forward("detectorBoxIsFull", "detectorBoxIsFull(OK)" ,"detector" ) 
+						 }
+						else
+						 {  }
+						 }
+						else
+						 { forward("moveOk", "moveOk(OK)" ,"detector" ) 
+						  }
+						 }
+						else
+						 { forward("obstacleFound", "obstacleFound(X)" ,"detector" ) 
+						  }
 					}
-					 transition( edgeName="goto",targetState="doPlannedMoves", cond=doswitchGuarded({(IsBottle)}) )
-					transition( edgeName="goto",targetState="doExplore", cond=doswitchGuarded({! (IsBottle)}) )
+					 transition(edgeName="t19",targetState="doPlannedMoves",cond=whenDispatch("moveOk"))
+					transition(edgeName="t110",targetState="doExplore",cond=whenDispatch("obstacleFound"))
+					transition(edgeName="t111",targetState="goHome",cond=whenDispatch("detectorBoxIsFull"))
+					transition(edgeName="t112",targetState="goHome",cond=whenDispatch("suspend"))
+					transition(edgeName="t113",targetState="goHome",cond=whenDispatch("terminate"))
 				}	 
 			}
 		}

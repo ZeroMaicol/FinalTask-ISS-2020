@@ -20,7 +20,6 @@ class Wroomserver ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name,
 					action { //it:State
 						println("STARTING SERVER AND RESOURCES")
 						kotlincode.resServer.init(myself)
-						kotlincode.coapSupport.init( "coap://localhost:5683"  )
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 

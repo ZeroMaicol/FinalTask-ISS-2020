@@ -9,53 +9,39 @@ import org.eclipse.californium.core.CoapServer
 import it.unibo.kactor.ActorBasic
 import it.unibo.kactor.MsgUtil
 import kotlinx.coroutines.launch
-import itunibo.planner.plannerUtil
-import itunibo.planner.moveUtils
 
-
-class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name ){
- 	var bottles = 0
-	var NPB = 0 
+class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var pos        = "(0,0)"
+	var direction  = "SUD"
+	var moving     = "false"
 	
 	init{
 		setObservable(true)
 		println("resource $name  | created  " );		
 	}
 	override fun handleGET( exchange : CoapExchange ) {
-		exchange.respond( "$bottles" )  // moving=$moving" , $pos dir($direction)
+		//println("resource $name  | GET: ${exchange.getRequestText()} pos=$pos moving=$moving" )
+		exchange.respond( "pos$pos,dir($direction),moving$moving" )  // moving=$moving" , $pos dir($direction)
 	}
 	override fun handlePUT( exchange : CoapExchange) {
 		val msg = exchange.getRequestText()
+		//println("resource $name  | PUT: $msg")
 		when( msg ){
-			"0" ->  { resetBottles() }
-	 		else -> {
-				if (msg.contains("NPB")) {
-					val NPBValue = msg.substring(4)
-					setNPB(NPBValue)
-				} else {
-					updateBottles(msg)
-				}
-	 		} 
+			"0" -> resetDetector()
+ 			else -> {
+				var splitted = msg.split(".")
+				pos = splitted[0]
+				direction = splitted[1]
+				moving = splitted[2]
+			}
 		}
 		changed()	// notify all CoAp observers
  		exchange.respond(CHANGED)
 	}
 	
-	fun updateBottles(msg:String){
-		var value = msg.toIntOrNull()
-		if (value != null) {
-			bottles = bottles+value
-		}
-	}
-	
-	fun resetBottles(){
-		bottles = 0
-	}
-	
-	fun setNPB(NPBValue:String){
-		var value = NPBValue.toIntOrNull()
-		if (value != null){
-			NPB = value
-		}
+	fun resetDetector(){
+		pos = "(0,0)"
+		direction = "SUD"
+		moving = "false"
 	}
 }

@@ -47,6 +47,9 @@ class resRobotCommand(name : String) : CoapResource( name ){
  		exchange.respond(CHANGED)
 	}
 	
+	fun sendExplore(msg: String){
+		owner.scope.launch{ MsgUtil.sendMsg("cmd","cmd($msg)",owner) }
+	}
 	
 	private class UpdateTask
 }
