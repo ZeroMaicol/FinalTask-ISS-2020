@@ -9,8 +9,6 @@ import org.eclipse.californium.core.CoapServer
 import it.unibo.kactor.ActorBasic
 import it.unibo.kactor.MsgUtil
 import kotlinx.coroutines.launch
-import itunibo.planner.plannerUtil
-import itunibo.planner.moveUtils
 import org.eclipse.californium.core.coap.CoAP
 
 
@@ -46,10 +44,6 @@ class resRobotCommand(name : String) : CoapResource( name ){
 		println("put: $msg")
  		exchange.respond(CHANGED)
 	}
-	
-	fun sendExplore(msg: String){
-		owner.scope.launch{ MsgUtil.sendMsg("cmd","cmd($msg)",owner) }
-	}
-	
+
 	private class UpdateTask
 }
