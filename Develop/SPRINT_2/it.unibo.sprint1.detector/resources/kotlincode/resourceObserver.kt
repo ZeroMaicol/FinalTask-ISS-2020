@@ -20,6 +20,7 @@ var mqtt   : MqttUtils
 	
 	override fun onLoad( response : CoapResponse ) {
 		val content = response.getResponseText()
+		println(""+response.getOptions())
 		println("RESOURCE OBSERVER HANDLER | value=" + content)  //content=pos(1, 0),dir(SUD)
 	}
 	override fun onError(){ println("RESOURCE OBSERVER HANDLER | FAILED ")} 
@@ -43,13 +44,13 @@ lateinit var path   : String
 	fun observe( ){
 		println("RESOURCE OBSERVER | STARTS path=$path"  )
 		//GlobalScope.launch{
-			client.observe( handler() )
 			//System.`in`.read()
+		var v = client.observe( handler())
  		//}
 	}
 }
 
 fun main(){
-	resourceObserver.init("coap://localhost:5683", "robot/pos")
+	resourceObserver.init("coap://localhost:5683", "wroom/plasticBox")
 	System.`in`.read()
 }

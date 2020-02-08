@@ -25,7 +25,6 @@ lateinit var host   : String
 	private fun setClientForPath( path : String ){
 		println("setClientForPath $path")
 		val url = host + "/" + path
-		//println("coapSupport | setClientForPath url=$url")
 		client = CoapClient( url )
 		client.setTimeout( 1000L )
 		client.useNONs()
@@ -33,9 +32,7 @@ lateinit var host   : String
 	
 	fun updateResource( owner : ActorBasic, path: String, msg : String ){
 		setClientForPath( path )
-		//println("coapSupport | updateResource $msg $client")
 		val resp : CoapResponse = client.put(msg, MediaTypeRegistry.TEXT_PLAIN)
-		//println("coapSupport | updateResource respCode=${resp.getCode()}")
 	}
 	
 	fun updateDetectorPosition(pos:String, direction:String, moving:String){
@@ -82,7 +79,6 @@ lateinit var host   : String
 		val v = "state("+respGet.getResponseText()+")"
 		val bottles = ( Term.createTerm(v) as Struct ).getArg(0).toString()
 		val ndb = ( Term.createTerm(v) as Struct ).getArg(1).toString()
-		//println("coapSupport | readPos v=$v")
 		result.put(1, bottles.toInt())
 		result.put(2, ndb.toInt())
 	}
@@ -94,6 +90,7 @@ class ForwardCommandToActor(actor: ActorBasic): CoapHandler {
 	
 	var actor: ActorBasic
 	var previousResponse: CoapResponse? = null
+	var previous: String? = null
 	
 	init {
 		this.actor = actor
@@ -101,9 +98,14 @@ class ForwardCommandToActor(actor: ActorBasic): CoapHandler {
 	
 	override fun onLoad(response: CoapResponse) {
 		val content = response.getResponseText()
-		println("NOTIFICATION $content, code: ${response.getCode().value}")
-		response.advanced().setCanceled(true)
-		actor.scope.launch { MsgUtil.sendMsg("cmd", "cmd($content)", actor) }
+		if (content != previous){
+			println("NOTIFICATION $content, code: ${response.getCode().value}")
+			response.advanced().setCanceled(true)
+			actor.scope.launch { MsgUtil.sendMsg("cmd", "cmd($content)", actor) }
+			previous = content
+		} else {
+			println("Same as before, no send")
+		}
 	}
 	
 	override fun onError() {

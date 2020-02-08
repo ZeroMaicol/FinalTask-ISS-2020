@@ -38,9 +38,8 @@ class resRobotCommand(name : String) : CoapResource( name ){
 			"home"		->  { state = State.HOME }
  			//else -> println("")
 		}
-		if (prevState != state) {
-			changed()	// notify all CoAp observers
-		}
+		changed()	// notify all CoAp observers
+
 		println("put: $msg")
  		exchange.respond(CHANGED)
 	}
