@@ -31,6 +31,10 @@ class resRoomMap( val owner: ActorBasic, name : String) : CoapResource( name ){
 		}
 		changed()	// notify all CoAp observers
  		exchange.respond(CHANGED)
+		println("-----------------------------------------")
+		println("RESOURCE ROOM MAP UPDATED WITH:")
+		println(roomMap)
+		println("-----------------------------------------")
 	}
 	
 	fun resetMap(){

@@ -29,7 +29,7 @@ CodedQActor robotadapter context ctxBasicRobot
 		className "itunibo.robot.robotAdapterQaStream"  //NOV 2019
 
 QActor basicrobot context ctxBasicRobot{ 
-
+["	var previousTime: Long = 0L"]
 	State s0 initial{  
 ["  
 //The PIPE could be completely created by the robotAdapterQaStream
@@ -58,6 +58,9 @@ QActor basicrobot context ctxBasicRobot{
 		onMsg( cmd : cmd(X) ){  //redirect the command to the robotadapter
 			//println("	basicrobot | redirect userCmd to robotadapter ")
  			forward robotadapter -m cmd : cmd( $payloadArg(0 ) )
+ 			["var l = System.currentTimeMillis()"]
+ 			println("BASICROBOT MILLIS: ${l-previousTime}")
+ 			["previousTime = l"]
 		}
 	}
 	Goto work

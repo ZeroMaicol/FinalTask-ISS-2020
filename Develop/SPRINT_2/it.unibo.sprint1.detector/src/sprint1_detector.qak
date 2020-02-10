@@ -14,8 +14,14 @@ Dispatch cmd  : cmd(X)
 
 Dispatch updateBottle  : updateBottle(X)
 Dispatch emptyBottleResource : emptyBottleResource(X)
-Request  explore   :  explore(X)
-Reply    exploreAck  :  exploreAck(V)
+
+//Request  explore   :  explore(X)
+//Reply    exploreAck  :  exploreAck(V)
+Dispatch explore : explore(X)
+Dispatch suspend : suspend(X)
+Dispatch terminate : terminate(X)
+
+
 Dispatch backHome: backHome(X)
 Dispatch detectorBoxIsFull : detectorBoxIsFull(X)
 
@@ -47,7 +53,7 @@ CodedQActor detectorAdapter context ctxWroom
     
 QActor detector context ctxWroom{
 ["
-val StepDuration = 400L
+val StepDuration = 200L
 var IsBottle     = false
 var radius = 0
 var exploreX = 0
@@ -80,13 +86,16 @@ var beforeEmptyPos_y = -1
 		["goToHome = false"]
 		run itunibo.planner.plannerUtil.showMap()
 	} 
-	Transition t0 whenRequest explore -> startExplore
+	Transition t0 
+		whenMsg explore -> startExplore
+		whenMsg suspend -> goHome
+		//whenMsg terminate -> 
   			
 
   	State startExplore{
   		printCurrentMessage
   		run itunibo.planner.plannerUtil.initAI()
-  		replyTo explore with exploreAck : exploreAck(OK)
+  		//replyTo explore with exploreAck : exploreAck(OK)
 //  		forward basicrobot -m cmd : cmd(w)
 		["radius = 0"]
   	}
@@ -114,6 +123,17 @@ var beforeEmptyPos_y = -1
 	Goto executeHomeMove
  	 
  	State executeHomeMove {
+ 		printCurrentMessage
+ 		
+ 		//UPDATE RESOURCES
+ 		["	var PosX = "] run itunibo.planner.plannerUtil.getPosX()
+		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
+		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
+		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+ 		
+ 		
  		if "(itunibo.planner.plannerUtil.isRobotHome())" {
  			if "emptyTheDetectorBox" {
  				forward detector -m detectorBoxIsFull : detectorBoxIsFull( OK )
@@ -184,6 +204,11 @@ var beforeEmptyPos_y = -1
 			println("")
 			println("doExplore: currentMap:")
 			run itunibo.planner.plannerUtil.showMap()
+			
+			//UPDATE RESOURCE
+			["var Map = "] run itunibo.planner.plannerUtil.getMap()
+			run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+			
 			println("doExplore goal: ($exploreX,$exploreY)")
 			run itunibo.planner.plannerUtil.setGoal("$exploreX","$exploreY")
 			run itunibo.planner.plannerUtil.doPlan()
@@ -204,6 +229,15 @@ var beforeEmptyPos_y = -1
 	
 	State doPlannedMoves {
 //		delay 500
+
+		//UPDATE RESOURCES
+		["	var PosX = "] run itunibo.planner.plannerUtil.getPosX()
+		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
+		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
+		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+		
 	} 
 	Goto doMove if "(itunibo.planner.plannerUtil.hasPlannedMoves())" else doExplore
 	
@@ -390,10 +424,10 @@ var IsBottle      = false
 	State doStep{ 
  		//printCurrentMessage  
 		onMsg( onestep : onestep( T ) ){
+			forward basicrobot -m cmd : cmd( w )  //ATTEMPT TO MOVE ...
 			["StepTime = payloadArg(0).toLong() 
  			  startTimer()"]	//REQUIREMENT req-onestep-time
-			//println("smartrobot | doStep StepTime =$StepTime ")
-			forward basicrobot -m cmd : cmd( w )  //ATTEMPT TO MOVE ...
+			println("steprobot | doStep StepTime =$StepTime ")
 		}  
 	}  
 	Transition t0 
@@ -424,14 +458,6 @@ var IsBottle      = false
  		replyTo onestep with stepdone : stepdone(ok)
   	}
 	Goto work
-	 
-//	State stepFail{ //REQUIREMENT req-onestep-time, req-onestep-info
-//		["Duration=getDuration()"]  
-//		//getDuration(): built-in (with ref. to startTimer)
-//		replyTo onestep with stepfail : stepfail($Duration, obstacle)
-//		//println("smartrobot | stepFail Duration=$Duration ")
-//   	}
-//	Goto work 
 
 	State stepFailVirtual{ //REQUIREMENT req-onestep-time, req-onestep-info
 		[" Duration=getDuration()

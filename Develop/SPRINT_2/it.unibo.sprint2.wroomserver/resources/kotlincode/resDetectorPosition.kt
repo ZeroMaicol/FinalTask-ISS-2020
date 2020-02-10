@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource( name ){
  	var pos        = "(0,0)"
 	var direction  = "SUD"
-	var moving     = "false"
+	var moving     = "idle"
 	
 	init{
 		setObservable(true)
@@ -35,6 +35,12 @@ class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource(
 				moving = splitted[2]
 			}
 		}
+		
+		println("-----------------------------------------")
+		println("RESOURCE POSITION UPDATED WITH:")
+		println(pos+" "+direction+" "+moving)
+		println("-----------------------------------------")
+		
 		changed()	// notify all CoAp observers
  		exchange.respond(CHANGED)
 	}
