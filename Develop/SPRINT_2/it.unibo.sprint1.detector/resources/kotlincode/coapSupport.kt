@@ -105,8 +105,10 @@ class ForwardCommandToActor(actor: ActorBasic): CoapHandler {
 				actor.scope.launch { MsgUtil.sendMsg("explore", "explore($content)", actor) }
 			} else if (content == "SUSPEND") {
 				actor.scope.launch { MsgUtil.sendMsg("suspend", "suspend($content)", actor) }
-			} else {
+			} else if (content == "TERMINATE") {
 				actor.scope.launch { MsgUtil.sendMsg("terminate", "terminate($content)", actor) }
+			} else {
+				//HOME
 			}
 			previous = content
 		} else {

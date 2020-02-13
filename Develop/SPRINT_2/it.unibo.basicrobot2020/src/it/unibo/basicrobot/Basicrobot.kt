@@ -15,6 +15,7 @@ class Basicrobot ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
+			var previousTime: Long = 0L
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -44,6 +45,9 @@ class Basicrobot ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						if( checkMsgContent( Term.createTerm("cmd(X)"), Term.createTerm("cmd(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								forward("cmd", "cmd(${payloadArg(0)})" ,"robotadapter" ) 
+								var l = System.currentTimeMillis()
+								println("BASICROBOT MILLIS: ${l-previousTime}")
+								previousTime = l
 						}
 					}
 					 transition( edgeName="goto",targetState="work", cond=doswitch() )
