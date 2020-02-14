@@ -17,7 +17,7 @@ public class Sprint_1 {
 	// paho
 	private String broker = "tcp://localhost";
 	private String detectorTopic = "unibo/qak/detector";
-	private String msgContent = "msg(explore,request,js,detector,explore(1),1)";
+	private String msgContent = "msg(explore,dispatch,js,detector,explore(1),1)";
     private String clientId = "sprint_1";
     private MemoryPersistence persistence = new MemoryPersistence();
     private int qos = 2;
