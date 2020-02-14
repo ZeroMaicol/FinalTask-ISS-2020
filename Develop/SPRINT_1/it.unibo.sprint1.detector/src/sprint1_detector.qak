@@ -12,8 +12,7 @@ mqttBroker "localhost" : 1883
  
 Dispatch cmd  : cmd(X)
 Dispatch updateBottle  : updateBottle(X)
-Request  explore   :  explore(X)
-Reply    exploreAck  :  exploreAck(V)  
+Dispatch  explore   :  explore(X)
 Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
 
 Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt  
@@ -34,12 +33,11 @@ var IsBottle     = false
 	
 	State work{} 
 	Transition t0 
- 			whenRequest explore -> doExplore
+ 			whenMsg explore -> doExplore
   			
 
   	State doExplore{
   		printCurrentMessage
-  		replyTo explore with exploreAck : exploreAck(OK)
   		forward basicrobot -m cmd : cmd(w)
   	}
   	Transition t1

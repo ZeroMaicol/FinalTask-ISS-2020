@@ -226,8 +226,9 @@ The meta-model QAK provides the possibility of 3 different communication models:
 <li> <strong>Request-Response</strong>: Same as Fire and Forget but also worse because of the quantity of messages sent. </li>
 <li> <strong>Event</strong>: Components don't need to know eachother, but it's more complicated to develop because it needs an infrastructure that supports this type of communication.</li> 
 </ul>
-In the scenario of the interaction between the detector and the supervisor, after discussing with the client, it was concluded that a request response model is required. <br/>
-The client explained that the detector must respond to the supervisor commands, but this will be further discussed in next SPRINT, for now what is decided to implement is a simple ACK response.<br/>
+
+The given problematic implies that the model to use is the dispatch model.<br/>
+This is because an event would be received by anyone listening for it, and a response is not required.
 
 <h4> Application Message </h4>
 A class Application message is provided within the QAK model.<br/>
@@ -244,11 +245,9 @@ To adopt a divide and conquer strategy the DetectorBox is an entity separated fr
 As a consequence the Detector Box is a QActor in the same context as the detector, that tracks the bottle that the detector has collected.
 
 <h3>The need of a CoAP resource (Detector) (Maicol)</h3>
-The code that will be developed won't be completed until some meaningful functional tests are developed and tested.<br/>
-To make the testing we need some knowledge somewhere, as a consequence the necessity of a resource is born.<br/>
-The resource implies a logical architecture that use an hexagonal meta-model.<br/>
-The QAK model that was already discussed, is provided of a Californium extension that permits already to make use of resources.<br/>
-
+In the requirements it is requested to use a CoAP resource for the PlasticBox.<br/>
+CoAP is a RESTful interaction protocol lighter than HTTP, more suited for constrained devices.<br/>
+It is also important to develop meaningful test-plans for our system and CoAP provides us with an easy method to do so.<br/>
 <table style="width:100%" border="1">
 <tbody><tr>
 <td style="width:50%">
@@ -314,18 +313,21 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 <td style="width:50%">
 <pre>
 QActor detector context ctxWroom{
-["var IsBottle = false"]  	
+[" 
+var IsBottle     = false
+"]  	
 	State s0 initial{
 		println("detector starting...")
 		delay 2000
  		println("detector started!")	
 	}
 	Goto work
+	
 	State work{} 
 	Transition t0 
- 			whenRequest explore -> doExplore 			
+ 			whenMsg explore -> doExplore
   	State doExplore{
-  		replyTo explore with exploreAck : exploreAck(OK)
+  		printCurrentMessage
   		forward basicrobot -m cmd : cmd(w)
   	}
   	Transition t1
@@ -403,6 +405,7 @@ any implementation detail (e.g. the topic <tt>unibo/qak/events</tt>).
 <strong>BASIC ROBOT</strong>: extension with a new command to collect the bottle. <br/>
 <strong>VIRTUAL ROBOT</strong>: extension to permit to show a bottle and collect it. (This virtual space is used for testing)<br/>
 <strong>FRONTEND</strong>: Button to comunicate an explore message and a label to show the bottle inside the detectorBox.
+<strong>TESTING</strong>: Create a meaningful test.
 
 <h3>The Effort/Resources</h3>
 <h4>Detector and Detector Box development (Maicol)</h4>
@@ -410,7 +413,11 @@ Thanks to the already developed and tested basicrobot and the features provided 
 A time of 1 hour is estimated.
 
 <h4>Front-end (Christian)</h4>
-Since it was already developed, we use a stripped down version of the front-end. 1 man hour is estimated for the job.
+Since it was already developed, we use a stripped down version of the front-end. <br/>1 man hour is estimated for the job.
+
+<h4>Testing (Bondi)</h4>
+Using CoAP helps the development of test plans by providing the developer with the needed knowledge regarding the system.<br/>
+A time of 1 hour is estimated.
 
 <h2>Test plans (Bondi)</h2> 
 The results to be achieved in this first sprint can be summarized through a single simple final test. This test involves the positioning of the robot and a plastic bottle inside a room. The robot must reach and collect the bottle just by moving forward with the assumption that there are no obstacles between the robot and the bottle.
