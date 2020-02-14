@@ -188,14 +188,19 @@ After discussing with the client, the objective of this test plan is to verify t
 The softwarehouse is already provided of a tool called planner.<br/>
 This tool is able to produce a map and to make plans on it.<br/>
 Every time the robot makes a move, the plan is calculated and the map is produced with every step.<br/>
+If the robot encounters an obstacle, the map must be updated with the obstacle position and the plan must be recalculated.
+
+
 <h4>The map</h4>
-The map produced its based on the robot measure: every robot step its a new cell on the map, this cell is filled with a 1 or a 0 depending on the situation.<br/>
-If the robot can move to that cell the map shows a 1, otherwise a 0, defining an obstacle.<br/>
+The map produced its based on the robot measure: every robot step its a new cell on the map, this cell is filled with a 1,0 or X depending on the situation.<br/>
+If the robot has explored the cell the map shows a 1, otherwise a 0 if its not yet explored or an X if its an obstacle.<br/>
 This process of mapping could be automatized if the room and the objects in it are static, otherwise the process must be executed every time the detector explores the room.
 <h4>The room problematic final take</h4>
 Having at disposal this tool, it doesn't matter if the room has objects or not, or if they are moving or not, the map can be calculated every time the robot explores it.
 
-<h4>The requirement obstacle</h4>
+<h4>The movement problematic</h4>
+The robot can move forward, backward and can turn left or right by 90 degrees, morover the robot exploration always start with the robot in coordinates (0,0) facing south.
+<h4>The obstacle problematic</h4>
 The robot is able to move, as a consequence, a new problematic arise: the robot, when moving forward, should be able to stop in the presence of an obstacle.<br/>
 The stop should be forced below a certain threshold distance from the obstacle.<br/>
 This is already possible and already implemented inside the basicrobot.qak.<br/>
@@ -211,13 +216,14 @@ Considering that the content of the detectorBox is released inside the plasticBo
 	<li>The plasticBox and the detector interacts only via CoAP updating resources.</li>
 </ul>
 As an analyst, the choice that better solves our case, is that the detector, after checking that 
-the plasticBox can receive the content of the detectorBox, notifies the plasticBox of the bottles that it is descharging.<br/>
+the plasticBox can receive the content of the detectorBox, notifies the plasticBox of the bottles that it is discharging.<br/>
 This check is possible via the CoAP resources updated by the plasticBox and the detectorBox.<br/>
 This choice was taken because the company doesn't possess a sensor that allows to count bottles, and the client is cheap.
 
 <h3>Finding the plastic box problematic</h3>
 When the detector has to empty the detectorBox, it could happen that the plasticBox hasn't already been discovered.<br/>
 To prevent this kind of situation, it is assumed that the plasticBox is always situated in a known place of the room.<br/>
+In particular is situated at coordinates (0,0).
 
 <h3>Functional Architecture</h3>
 
@@ -225,30 +231,61 @@ To prevent this kind of situation, it is assumed that the plasticBox is always s
 <tbody>
 <tr>
 <td style="width:50%">
+<h4>The Detector (Christian/Bondi)</h4>
+<pre>
+
+</pre>
+</td>
+<td>
+<h4>Steprobot (Christian)</h4>
+<pre>
+
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
 <h4>The plasticBox (Maicol)</h4>
 <pre>
-QActor plasticbox context ctxWroom{	
-["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+QActor plasticbox context ctxWroom{
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NPB:Int = 0
+"]
 	State s0 initial{
-		println("plasticBox started: initializing resource value...")
-		run kotlincode.coapSupport.init("coap://localhost:5683")
-		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=10")
+		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+		["NPB = plasticBox.plasticBoxSupport.NPB"]
+		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=$NPB")
 		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
 		["val Bottles = Result.get(1)
-		  val NPB = Result.get(2)"]
-		println("Resource correctly initialized: bottles=$Bottles, NPB=$NPB") 
+		  val npb = Result.get(2)"]
 	}
 	Goto work
+	
 	State work {}
 	Transition t0
 		whenMsg collect -> doCollect
+		whenMsg empty -> emptyTheBox
 	
 	State doCollect{
 		onMsg(collect : collect(X)) {
 			["var Bottles = payloadArg(0)"]
 			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "$Bottles")
 		}
-	}	
+	}
+	Goto work
+
+	State emptyTheBox {
+		onMsg(empty : empty(X)) {
+			["var Bottles = payloadArg(0)"]
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "0")
+		}
+	}
 	Goto work
 }
 </pre>
@@ -310,27 +347,38 @@ class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name 
 <h4>The detectorBox (Maicol)</h4>
 <pre>
 QActor detectorbox context ctxWroom{
-["var Result:HashMap<Int,Int> = HashMap<Int,Int>()"]
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NDB:Int = 0
+"]
  	State s0 initial{
- 		println("detectorBox starts")
  		run kotlincode.coapSupport.init("coap://localhost:5683")
- 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=5")
+ 		["NDB = detector.detectorSupport.NDB"]
+ 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=$NDB")
  		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
 		["val Bottles = Result.get(1)
-		  val NDB = Result.get(2)"]
-		println("Resource correctly initialized: bottles=$Bottles, NDB=$NDB") 
+		  val ndb = Result.get(2)"]
  	}
 	Goto work 
+	
 	State work{}
 	Transition t0
 		whenMsg updateBottle -> updateBottleResource
+		whenMsg emptyBottleResource -> emptyBottleResource
 	
   	State updateBottleResource{
-		onMsg( updateBottle : updateBottle(X)){			
+		onMsg( updateBottle : updateBottle(X)){
 			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
 		}   
 	}
-  	Goto work
+  	Goto work 
+	
+	State emptyBottleResource {
+		onMsg(emptyBottleResource : emptyBottleResource(X)){
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "0")
+		}
+	}
+	Goto work
  }
 </pre>
 </td>
@@ -381,7 +429,75 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 </tr>
 </tbody></table>
 
-AGGIUNGI QUI LE ALTRE RISORSE CHE MANCANO!!!
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>ResDetectorPosition (Maicol)</h4>
+<pre>
+class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var pos        = "(0,0)"
+	var direction  = "SUD"
+	var moving     = "idle"
+	init{
+		setObservable(true)		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "pos$pos,dir($direction),moving$moving" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" -> resetDetector()
+ 			else -> {
+				var splitted = msg.split(".")
+				pos = splitted[0]
+				direction = splitted[1]
+				moving = splitted[2]
+			}
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun resetDetector(){
+		pos = "(0,0)"
+		direction = "SUD"
+		moving = "false"
+	}
+}
+</pre>
+</td>
+<td>
+<h4>ResRoomMap (Maicol)</h4>
+<pre>
+class resRoomMap( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var roomMap:String = ""
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$roomMap ")  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetMap() }
+	 		else -> {
+				roomMap = msg
+	 		} 
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun resetMap(){
+		roomMap = ""
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
 
 
 <h3>The ProductBacklog</h3>
@@ -396,7 +512,10 @@ AGGIUNGI QUI LE ALTRE RISORSE CHE MANCANO!!!
 
 <h3>The Effort/Resources</h3>
 <strong>PLASTICBOX</strong>: The implementations of the plasticBox requires a .QAK and a resource. (1 hour)<br/>
-<strong>FRONTEND</strong>: Add 2 buttons. (5 minute)
+<strong>FRONTEND</strong>: Add 2 buttons. (5 minute)<br/>
+<strong>RESOURCES</strong>: Estimated 1 man hour.<br/>
+<strong>DETECTOR WITH TASKS</strong>: Estimated 1 week because it comprehends the planner development.<br/>
+<strong>TESTPLANS</strong>: Estimated 3 man hour.
 
 <h2>Test plans</h2> 
 <div class="remark">
@@ -500,6 +619,54 @@ object plasticBoxSupport{
 </td>
 </tr>
 </tbody></table> 
+<h3>From MQTT to CoAP (Christian)</h3>
+To exclude any knowledge of the implementation detail to the front-end, the front-end will send the required command to the detector via CoAP resource instead of mqtt.
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The Detector as a resource observer. (Christian)</h4>
+<pre>
+run kotlincode.coapSupport.observeCommands(myself)
+</pre>
+</td>
+<td>
+<h4>The resource observer (Christian)</h4>
+<pre>
+fun observeCommands(actor: ActorBasic) {
+		setClientForPath("wroom/robotCommand")
+		val relation = client.observe(ForwardCommandToActor(actor))
+}
+
+class ForwardCommandToActor(actor: ActorBasic): CoapHandler {
+	
+	var actor: ActorBasic
+	var previous: String? = null
+	init {
+		this.actor = actor
+	}
+	override fun onLoad(response: CoapResponse) {
+		val content = response.getResponseText()
+		if (content != previous){
+			println("NOTIFICATION $content, code: ${response.getCode().value}")
+			response.advanced().setCanceled(true)
+			if (content == "EXPLORE"){
+				actor.scope.launch { MsgUtil.sendMsg("explore", "explore($content)", actor) }
+			} else if (content == "SUSPEND") {
+				actor.scope.launch { MsgUtil.sendMsg("suspend", "suspend($content)", actor) }
+			} else if (content == "TERMINATE") {
+				actor.scope.launch { MsgUtil.sendMsg("terminate", "terminate($content)", actor) }
+			} 
+			previous = content
+		} else {
+			println("Same as before, no send")
+		}
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table> 
 
 
 <h2>Testing</h2> 
@@ -507,23 +674,6 @@ object plasticBoxSupport{
 <ks>GOAL</ks>: complete the <k>functional TestPlans</k> according to the project code and execute them.
 </div>
 
-<h2>Deployment</h2> 
-<h3>Every .QAK</h3> 
-<ol>
-<li>Edit the generated file <tt>build.gradle</tt> as follows: 
-<ul>
- <li><b>uncomment</b>: id 'application' </li>
- <li><b>uncomment</b>: mainClassName = 'it.unibo.TODOKt'</li>
- <li><b>uncomment</b>: the jar. </li>
-</ul>
-<li>Set <b> mainClassName =</b> <tt>'it.unibo.ctxBasicRobot.MainCtxBasicRobotKt'</tt> for the BasicRobot for example.</li>
-<li>Run <pre> gradle build eclipse</pre> </li>
-<li>Unzip (somewhere) the file <tt>it.unibo.project_name\build\distributions\it.unibo.project_name-1.0.zip</tt> where "project_name" depends on the project</li>
-<li>Copy into the <tt>bin</tt> directory all the configurations file <kc>name_file.pl</kc>, for example <kc>sysRules.pl</kc> </li>
-<li>Edit <kc>nameConfig.pl</kc> to denote the concrete robot to be used</li>
-<li>Execute <k>it.unibo.project_name.bat</k></li>
-</ol>
-<h2>Maintenance</h2> 
 
 <table style="width:100%" border="1">
 <tr>

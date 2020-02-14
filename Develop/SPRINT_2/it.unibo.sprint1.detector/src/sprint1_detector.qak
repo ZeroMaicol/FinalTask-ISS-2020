@@ -138,8 +138,8 @@ var beforeEmptyPos_y = -1
 				["beforeEmptyPos_y = "] run itunibo.planner.plannerUtil.getPosY()
 				["goToHome = true
 				  emptyTheDetectorBox = true
-				  robotWasExploring = true"]
-				forward detector -m detectorMustEmpty : detectorMustEmpty(OK)
+				  robotWasExploring = true"] //ATTENZIONE A ROBOT EXPLORING, FALSE SE TERMINATE NO? ---------------------------------
+				forward detector -m detectorMustEmpty : detectorMustEmpty(OK) // A COSA SERVE? --------------------------------------
 			} else {
 				// TODO send a message to the supervisor (frontend) and wait for a command
 				// forward supervisor -m detectorCantEmpty : detectorCantEmpty(detectorCantEmpty)
