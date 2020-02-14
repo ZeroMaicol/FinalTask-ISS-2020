@@ -128,7 +128,7 @@ var publishMsgToResourceModel = function( target, cmd ){
 }
 
 var publishExploreRequestToDetector = function(cmd){  
-	var msgstr = "msg(explore,request,js,detector,explore(1),1)"  ;  
+	var msgstr = "msg(explore,dispatch,js,detector,explore(1),1)"  ;  
 	console.log("applCode | publishExploreRequestToDetector requests> "+ msgstr); 	
 	mqttUtils.publish( msgstr, "unibo/qak/detector" );
 }
