@@ -86,14 +86,14 @@ var beforeEmptyPos_y = -1
 		println("")
 		println("work::: CurrentMap is:")
 		["goToHome = false"]
+		run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "s")
 		run itunibo.planner.plannerUtil.showMap()
 	} 
 	Transition t0 
 		whenMsg explore -> startExplore
 		whenMsg suspend -> goHome
-		whenMsg terminate -> executeEmptyTheDetectorBox
-  			
-
+		whenMsg terminate -> terminateTask
+  	
   	State startExplore{
   		printCurrentMessage
   		run itunibo.planner.plannerUtil.initAI()
@@ -102,6 +102,21 @@ var beforeEmptyPos_y = -1
 		["radius = 0"]
   	}
   	Goto exploreNextRadius
+  	
+  	State exploreNextRadius {
+  		println("")
+  		println("------------")
+  		println("exploreNextRadius: $radius")
+		["
+			radius = radius + 1
+			radiusFinished = false
+			exploreY = radius
+			exploreX = 0
+			exploringHorizontal = true
+		"]
+	}
+//	Goto doExplore if "(radius < 5)" else work
+	Goto doExplore if "(!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)" else gotoUnexplored
   	
   	State gotoUnexplored {
   		println("gotoUnexplored")
@@ -119,34 +134,48 @@ var beforeEmptyPos_y = -1
   	Goto doPlannedMoves if "(unexploredPosition != null)" else executeEmptyTheDetectorBox
 
 	State executeEmptyTheDetectorBox {
-		["goToHome = false"]
-		onMsg( terminate : terminate( X )) {
-			["goToHome = true"]
- 		}
   		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
   		["val BottlesInDetector = Result.get(1)"]
-  		if "BottlesInDetector!!.compareTo(0) == 0" {
-  			["goToHome = true"]
-  		}
   		if "BottlesInDetector!!.compareTo(0) > 0" {
 			run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
 			["val bottlesInPlasticBox = Result.get(1) !!
 			  val NPB = Result.get(2)
 			  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)"]
 			if "compareValues(NPB, totalBottles) >= 0" {
-				["beforeEmptyPos_x = "] run itunibo.planner.plannerUtil.getPosX()
-				["beforeEmptyPos_y = "] run itunibo.planner.plannerUtil.getPosY()
-				["goToHome = true
-				  emptyTheDetectorBox = true
-				  robotWasExploring = true"] //ATTENZIONE A ROBOT EXPLORING, FALSE SE TERMINATE NO? ---------------------------------
-				forward detector -m detectorMustEmpty : detectorMustEmpty(OK) // A COSA SERVE? --------------------------------------
+				["emptyTheDetectorBox = true"]
 			} else {
-				// TODO send a message to the supervisor (frontend) and wait for a command
-				// forward supervisor -m detectorCantEmpty : detectorCantEmpty(detectorCantEmpty)
+				["goToHome = false"]
 			}
   		}
 	}
-	Goto goHome if "goToHome" else work
+	Goto goHome if "goToHome" else waitForCommand
+	
+	State terminateTask {
+		onMsg( terminate : terminate( X )) {
+			["goToHome = true"]
+			run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+  			["val BottlesInDetector = Result.get(1)"]
+			if "BottlesInDetector!!.compareTo(0) > 0" {
+				run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+				["val bottlesInPlasticBox = Result.get(1) !!
+			  	val NPB = Result.get(2)
+			  	val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)"]
+				if "compareValues(NPB, totalBottles) >= 0" {
+					["emptyTheDetectorBox = true"]
+				}  else {
+					run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "w")
+				}
+  			}
+ 		}
+	}
+	Goto goHome
+
+	State waitForCommand {
+		run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "w")
+	}
+	Transition t0
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
 
 	State goHome {
 		run itunibo.planner.plannerUtil.setGoal("0", "0")
@@ -221,22 +250,6 @@ var beforeEmptyPos_y = -1
 		}
 	}
 	Goto doPlannedMoves
-	
-  	State exploreNextRadius {
-  		println("")
-  		println("------------")
-  		println("exploreNextRadius: $radius")
-		["
-			radius = radius + 1
-			radiusFinished = false
-			exploreY = radius
-			exploreX = 0
-			exploringHorizontal = true
-		"]
-	}
-//	Goto doExplore if "(radius < 5)" else work
-	Goto doExplore if "(!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)" else gotoUnexplored
-	
 	
 	State doExplore {
 		["if (exploreY < 0) { radiusFinished = true }"]
@@ -353,13 +366,11 @@ var beforeEmptyPos_y = -1
 					["beforeEmptyPos_y = "] run itunibo.planner.plannerUtil.getPosY()
 					["goToHome = true
 					  emptyTheDetectorBox = true
-					  robotWasExploring = true
-					"]
+					  robotWasExploring = true"]
 					forward detector -m detectorMustEmpty : detectorMustEmpty(OK)
 				} else {
-					// TODO send a message to the supervisor (frontend) and wait for a command
-					// forward supervisor -m detectorCantEmpty : detectorCantEmpty(detectorCantEmpty)
-					forward detector -m detectorCantEmpty : detectorCantEmpt(detectorCantEmpty)
+					run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "w")
+					forward detector -m detectorCantEmpty : detectorCantEmpty(detectorCantEmpty)
 				}
 			} else {
 				forward detector -m moveOk : moveOk(OK)
@@ -372,7 +383,8 @@ var beforeEmptyPos_y = -1
 	 	whenMsg moveOk -> doPlannedMoves
 	 	whenMsg obstacleFound -> doExplore
 		whenMsg detectorMustEmpty -> goHome
-		whenMsg detectorCantEmpty -> work
+		whenMsg detectorCantEmpty -> waitForCommand
+
 }
 
 QActor detectorbox context ctxWroom{

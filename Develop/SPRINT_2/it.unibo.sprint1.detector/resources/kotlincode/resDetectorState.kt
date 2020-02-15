@@ -14,7 +14,7 @@ import itunibo.planner.moveUtils
 
 
 enum class State( ){
-	EXPLORE, SUSPEND
+	EXPLORE, SUSPEND, WAIT
 }
 
 class resDetectorState( val owner: ActorBasic, name : String) : CoapResource( name ){
@@ -33,6 +33,8 @@ class resDetectorState( val owner: ActorBasic, name : String) : CoapResource( na
 		//println("resource $name  | PUT: $msg")
 		when( msg ){
 			"e" ->  { state = State.EXPLORE;  sendExplore("explore")}
+			"w" ->  { state = State.WAIT; }
+			"s" ->  { state = State.SUSPEND; }
  			//else -> println("")
 		}
 		changed()	// notify all CoAp observers
@@ -41,6 +43,12 @@ class resDetectorState( val owner: ActorBasic, name : String) : CoapResource( na
 	
 	fun sendExplore(msg: String){
 		owner.scope.launch{ MsgUtil.sendMsg("cmd","cmd($msg)",owner) }
+	}
+	
+	fun isStateWait(): Boolean {
+		if(state == State.WAIT)
+			return true
+		return false
 	}
 	
 }
