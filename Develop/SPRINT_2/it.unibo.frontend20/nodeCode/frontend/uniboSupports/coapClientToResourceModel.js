@@ -22,13 +22,13 @@ function handeData( response ){
 }
 */
 
-function createCoapClient( resourceAddr ){
+function observe( resourceAddr, prefix ){
 console.log("		coapClientToResourceModel | createCoapClient "  );
 coap
     .observe(
         resourceAddr /* string */,
         "get" /* "get" | "post" | "put" | "delete" */,
-        handle.handeData //handeData /* function */
+		(res) => handle.handeData(res, prefix) //handeData /* function */
         //[payload /* Buffer */,]
         //[options /* RequestOptions */]
     )
@@ -43,33 +43,15 @@ exports.setcoapAddr = function ( addr ){
 	//coapResourceAddr   = coapAddr + "/robot/pos" // coap://localhost:5683/robot/pos
 	coapResourceAddr = addr
 	console.log("coap | coapResourceAddr=" + coapResourceAddr);
-	createCoapClient( robotCommandResourceAddr   );
-	createCoapClient( positionResourceAddr );
-	createCoapClient( mapResourceAddr );
-	observeACK()
-}
-
-function observeACK() {
-	coap
-    .observe(
-        robotCommandResourceAddr /* string */,
-        "get" /* "get" | "post" | "put" | "delete" */,
-		handle.handleACK //handeData /* function */
-        //[payload /* Buffer */,]
-        //[options /* RequestOptions */]
-    )
-    .then(() => { console.log("		coapClientToResourceModel | observe setup " ); /* observing was successfully set up */})
-    .catch(err => { console.log("		coapClientToResourceModel | observe error " + err )  /* handle error */ })
-    ;
+	observe( robotCommandResourceAddr, "command");
+	observe( positionResourceAddr );
+	observe( mapResourceAddr );
 }
 
 exports.updateData = function() {
-	console.log("updateData")
-	exports.coapGet(robotCommandResourceAddr, handle.handleACK)
-	
-	exports.coapGet(positionResourceAddr, handle.handeData)
-	
-	exports.coapGet(mapResourceAddr, handle.handeData)
+	exports.coapGet(robotCommandResourceAddr, (res) => handle.handeData(res, "command"))
+	exports.coapGet(positionResourceAddr, (res) => handle.handeData(res))
+	exports.coapGet(mapResourceAddr, (res) => handle.handeData(res))
 }
 
 exports.coapGet = function ( resourceAddr, handler ){
@@ -82,13 +64,13 @@ exports.coapGet = function ( resourceAddr, handler ){
 	    )
 	    .then(response => { 			/* handle response */
 			console.log("coap get done> " + response.payload );
-			handler(response)
+			if (handler) {
+				handler(response)
+			}
 		})
 	    .catch(err => { /* handle error */ 
 	    	console.log("coap get error> " + err );}
 	    )
-	    ;
-	    
 }//coapPut
 
 exports.coapPut = function (  cmd, path ){ 
@@ -98,7 +80,6 @@ console.log("PUT " + coapResourceAddr + path);
 	if (path) {
 		resAddress += path
 	}
-
 	coap
 	    .request(
 			resAddress,     
@@ -112,9 +93,7 @@ console.log("PUT " + coapResourceAddr + path);
 	    .catch(err => { // handle error  
 	    	console.log("coap | put error> " + err + " for cmd=" + cmd);}
 	    )
-	    ;
-	    
-}//coapPut
+}
 
 const myself   = require('./coapClientToResourceModel');
 

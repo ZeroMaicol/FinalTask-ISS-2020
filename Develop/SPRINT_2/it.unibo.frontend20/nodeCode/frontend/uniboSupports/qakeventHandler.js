@@ -8,14 +8,11 @@ exports.setIoSocket = function ( iosock ) {	//called by
 	console.log("		qakeventHandler | SETIOSOCKET (to update the page) "  );
 }
 
-exports.handeData = function ( response ){
-	var msgStr = "state("+response.payload+")";
-	// console.log("		qakeventHandler | handeData: " + msgStr);
-	io.sockets.send( msgStr );
-}
-
-exports.handleACK = function(response) {
-	var msgStr =  "ACK("+response.payload +")";
+exports.handeData = function ( response, prefix ){
+	var msgStr = "("+response.payload+")";
+	if (prefix) {
+		msgStr = prefix + msgStr
+	}
 	console.log("		qakeventHandler | handeData: " + msgStr);
 	io.sockets.send( msgStr );
 }
