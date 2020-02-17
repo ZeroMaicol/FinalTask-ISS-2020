@@ -81,15 +81,15 @@ QActor basicrobot context ctxBasicRobot{
 //		forward robotadapter -m cmd : cmd( h )
 //		println("	basicrobot | stops (for safety) since  obstacle  ")
  	}
- 	Goto movefarFromObstacle 	//Added after introducing the real robot
+ 	Goto work 	//Added after introducing the real robot
 
-	State movefarFromObstacle{
-//		println("	basicrobot | going back (to avoid event-generation) ")
-// 		forward robotadapter -m cmd : cmd( s )
-//		delay 100
-//		forward robotadapter -m cmd : cmd( h )
-	}
-	Goto work	 
+//	State movefarFromObstacle{
+////		println("	basicrobot | going back (to avoid event-generation) ")
+//// 		forward robotadapter -m cmd : cmd( s )
+////		delay 100
+////		forward robotadapter -m cmd : cmd( h )
+//	}
+//	Goto work	 
 }  
 
 /*
@@ -97,35 +97,35 @@ QActor basicrobot context ctxBasicRobot{
  * It will be removed from final product deployment.
  * The PIPE is still experimental and should be created by the basicrobot
  */
- QActor sentinel context ctxBasicRobot{
-	State s0 initial{ 
-		delay 1000 
-		println("	sentinel | STARTS")
-	} 
-	//Goto work
-	
-	State work{  }
-	Transition t0 
-		//whenEvent obstacle   -> handleObstacle
-		whenEvent sonarRobot -> showTheMsg
-		whenEvent alarm      -> handleAlarm
-
-	State showTheMsg{
-		printCurrentMessage
-	}
-	Goto work
-
-	State handleObstacle{
-		printCurrentMessage
-		println("	sentinel | handleObstacle: emits alarm(obstacle) ")
-		emit alarm : alarm(obstacle)
-	}
- 	Goto s0
- 	 	
-	State handleAlarm{
-		printCurrentMessage
-		println("	sentinel | handleAlarm ")
-	}
- 	Transition t0 
-		whenEvent alarm -> handleAlarm
- }
+// QActor sentinel context ctxBasicRobot{
+//	State s0 initial{ 
+//		delay 1000 
+//		println("	sentinel | STARTS")
+//	} 
+//	//Goto work
+//	
+//	State work{  }
+//	Transition t0 
+//		//whenEvent obstacle   -> handleObstacle
+//		whenEvent sonarRobot -> showTheMsg
+//		whenEvent alarm      -> handleAlarm
+//
+//	State showTheMsg{
+//		printCurrentMessage
+//	}
+//	Goto work
+//
+//	State handleObstacle{
+//		printCurrentMessage
+//		println("	sentinel | handleObstacle: emits alarm(obstacle) ")
+//		emit alarm : alarm(obstacle)
+//	}
+// 	Goto s0
+// 	 	
+//	State handleAlarm{
+//		printCurrentMessage
+//		println("	sentinel | handleAlarm ")
+//	}
+// 	Transition t0 
+//		whenEvent alarm -> handleAlarm
+// }

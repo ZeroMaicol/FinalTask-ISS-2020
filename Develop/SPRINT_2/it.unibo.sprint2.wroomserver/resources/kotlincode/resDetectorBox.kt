@@ -20,7 +20,7 @@ class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name
 		println("resource $name  | created  " );		
 	}
 	override fun handleGET( exchange : CoapExchange ) {
-		exchange.respond( "$bottles, $NDB" )  // moving=$moving" , $pos dir($direction)
+		exchange.respond( "$bottles,$NDB" )  // moving=$moving" , $pos dir($direction)
 	}
 	override fun handlePUT( exchange : CoapExchange) {
 		val msg = exchange.getRequestText()

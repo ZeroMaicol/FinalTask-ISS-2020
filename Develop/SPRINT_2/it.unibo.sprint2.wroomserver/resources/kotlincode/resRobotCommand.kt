@@ -13,7 +13,7 @@ import org.eclipse.californium.core.coap.CoAP
 
 
 enum class State( ){
-	EXPLORE, SUSPEND, TERMINATE, HOME
+	EXPLORE, SUSPEND, TERMINATE, HOME, WAITING
 }
 
 class resRobotCommand(name : String) : CoapResource( name ){
@@ -36,6 +36,7 @@ class resRobotCommand(name : String) : CoapResource( name ){
 			"suspend" 	-> 	{ state = State.SUSPEND }
 			"terminate" ->	{ state = State.TERMINATE }
 			"home"		->  { state = State.HOME }
+			"waiting" -> { state = State.WAITING}
  			//else -> println("")
 		}
 		changed()	// notify all CoAp observers

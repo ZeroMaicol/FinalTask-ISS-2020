@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource( name ){
  	var pos        = "(0,0)"
-	var direction  = "SUD"
+	var direction  = "downDir"
 	var moving     = "idle"
 	
 	init{

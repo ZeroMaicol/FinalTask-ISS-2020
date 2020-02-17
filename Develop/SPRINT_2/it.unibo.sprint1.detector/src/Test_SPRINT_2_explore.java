@@ -13,23 +13,22 @@ public class Test_SPRINT_2_explore {
 
 	// coap
 	private String detectorBoxRes = "coap://localhost:5683/wroom/detectorBox";
-	//private String plasticBoxRes = "coap://localhost:5683/wroom/plasticBox";
+	private String plasticBoxRes = "coap://localhost:5683/wroom/plasticBox";
 	private String roomMapRes = "coap://localhost:5683/wroom/roomMap";
 	// paho
 	private String broker = "tcp://localhost";
 	private String detectorTopic = "unibo/qak/detector";
-	private String msgContent = "msg(explore,request,js,detector,explore(1),1)";
+	private String msgContent = "msg(explore,dispatch,js,detector,explore(1),1)";
     private String clientId = "sprint_1";
     private MemoryPersistence persistence = new MemoryPersistence();
     private int qos = 2;
     
     //Test
-    private static final long X = 10; //Number of walls "X" in map
-    private static final long ONE = 10; //Number of "1" in map
+    private static final long X = 15; //Number of walls "X" in map
+    private static final long ONE = 18; //Number of "1" in map
     private static final String BOTTLES = "2"; //Bottles to collect
-    private static final String MAP = "";
+    private static final String MAP_START = "map()";
 	
-    
 	@Test
 	public void sprint_1_Test() {
 		
@@ -37,11 +36,12 @@ public class Test_SPRINT_2_explore {
 		
 		
 		CoapClient detectorBoxClient = new CoapClient(detectorBoxRes);
-		//CoapClient plasticBoxClient = new CoapClient(plasticBoxRes);
+		CoapClient plasticBoxClient = new CoapClient(plasticBoxRes);
 		CoapClient roomMapClient = new CoapClient(roomMapRes);
 		
 		assertTrue("detectorbox is empty?", detectorBoxClient.get().getResponseText().substring(0, 1).equals("0"));
-		assertTrue("map is correctly initialized?", roomMapClient.get().getResponseText().equals(""));
+		System.out.println("MAP:"+roomMapClient.get().getResponseText());
+		assertTrue("map is correctly initialized?", roomMapClient.get().getResponseText().equals(MAP_START));
 		
 		
 		try {
@@ -66,7 +66,7 @@ public class Test_SPRINT_2_explore {
 		
 	
 		try {
-			Thread.sleep(3 *   // minutes to sleep
+			Thread.sleep(2 *   // minutes to sleep
 		             60 *   // seconds to a minute
 		             1000); // milliseconds to a second
 		} catch (InterruptedException e) {
@@ -76,10 +76,13 @@ public class Test_SPRINT_2_explore {
 		String map = roomMapClient.get().getResponseText();
 		long x_count = map.chars().filter(ch -> ch =='X').count();
 		long one_count = map.chars().filter(ch -> ch =='1').count();
+		long zero_count = map.chars().filter(ch -> ch == '0').count();
 		
 		assertTrue("every wall was found?", x_count == X);
 		assertTrue("every cell was explored?", one_count == ONE);
-		assertTrue("every bottle is collected?", detectorBoxClient.get().getResponseText().substring(0, 1).equals(BOTTLES));
+		//assertTrue("is the map right?", itunibo.planner.plannerUtil.isFullyExplored());
+		assertTrue("bottle emptied?", detectorBoxClient.get().getResponseText().substring(0, 1).equals("0"));
+		assertTrue("bottle collected?", plasticBoxClient.get().getResponseText().substring(0, 1).equals(BOTTLES));
 		
 	}
 
