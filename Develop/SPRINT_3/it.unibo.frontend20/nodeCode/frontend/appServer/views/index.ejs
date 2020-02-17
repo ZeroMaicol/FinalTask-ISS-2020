@@ -14,7 +14,9 @@ socket.on('connect', function(){
 	console.log("socket connected");
 });
 socket.on( 'message', function(v){ 
-//   console.log("RECEIVED " + v);
+  console.log("RECEIVED " + v);
+  if( v.indexOf("plasticBox")       >= 0 ){ setBottles("plasticBox", v) }
+  if( v.indexOf("detectorBox")       >= 0 ){ setBottles("detectorBox", v) }
   if( v.indexOf("command")       >= 0 ){ setCommand(v) }
   if( v.indexOf("map")       >= 0 ){ createMap(v) }
   if( v.indexOf("pos")       >= 0 ){ addPositionAndDirection(v) }
@@ -33,6 +35,18 @@ socket.on( 'message', function(v){
 // |1, 1, 1, 1, 1, 1, 1,
 // |0,
 //  )) `), 500)
+
+function setBottles(elementId, msg) {
+	console.log(msg)
+	var data = msg.match(/\(([^()]+)\)/g );
+	if (data.length >= 1) {
+		var values = data[0].split(",")
+		if (values.length >= 2) {
+			document.getElementById(elementId).innerHTML= values[0] + "/" + values[1]
+		}
+	}
+
+}
 
 function setCommand(msg) {
 	var data = msg.match(/\(([^()]+)\)/g );
@@ -238,6 +252,9 @@ that emits modelChange
 
 		<strong>Direction</strong>: <span id="direction"></span><br/>
 
+		<strong>DetectorBox bottles</strong>: <span id="detectorBox"></span><br/>
+
+		<strong>PlasticBox bottles</strong>: <span id="plasticBox"></span><br/>
 		<strong>Map</strong>:<br/>
 		<div id="mapArea"></div>
   	</div>
