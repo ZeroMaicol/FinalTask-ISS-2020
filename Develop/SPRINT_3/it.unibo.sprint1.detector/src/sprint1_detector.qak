@@ -87,7 +87,6 @@ var beforeEmptyPos_y = -1
 		println("work::: CurrentMap is:")
 		["goToHome = false"]
   		run itunibo.planner.plannerUtil.initAI()
-		run itunibo.planner.plannerUtil.resetMap()
 		run itunibo.planner.plannerUtil.showMap()
 	} 
 	Transition t0 
@@ -99,6 +98,7 @@ var beforeEmptyPos_y = -1
   		printCurrentMessage
   		//replyTo explore with exploreAck : exploreAck(OK)
 //  		forward basicrobot -m cmd : cmd(w)
+		run itunibo.planner.plannerUtil.resetMap()
 		["radius = 0"]
   	}
   	Goto exploreNextRadius

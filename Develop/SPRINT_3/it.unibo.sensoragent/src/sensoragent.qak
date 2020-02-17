@@ -29,7 +29,6 @@ QActor alarmagent context ctxAlarmAgent{
 			println("$Alarm")
 			if "Alarm == \"TVOC\""{
 				forward detector -m suspend:suspend($Alarm)
-				run kotlincode.coapSupport.setWroomAlarm()
 			}
 		}
 	}
@@ -59,7 +58,8 @@ QActor perceiver context ctxAlarmAgent{
 		//Check and Send
 		if "TVOC >= TVOC_threshold" {
 			println("$TVOC")
-			forward alarmagent -m alarm:alarm($TVOC_HIGH)
+//			forward alarmagent -m alarm:alarm($TVOC_HIGH)
+//			run kotlincode.coapSupport.setWroomAlarm()
 		} else {
 			if "kotlincode.coapSupport.readWroomState() != kotlincode.WroomState.IDLE"{ 
 				run kotlincode.coapSupport.setWroomIdle()	

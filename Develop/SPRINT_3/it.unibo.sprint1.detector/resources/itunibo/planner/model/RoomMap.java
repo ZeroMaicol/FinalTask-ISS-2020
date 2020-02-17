@@ -2,6 +2,7 @@ package itunibo.planner.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import itunibo.planner.model.RobotState.Direction;
@@ -45,6 +46,10 @@ public class RoomMap implements Serializable{
 			}
 		}
 		this.put(0, 0, new Box(false, false, true));
+	}
+	
+	private RoomMap(List<ArrayList<Box>> fromMap) {
+		this.roomMap = fromMap;
 	}
 	
 //	public Map<Coordinate, Box> getMapClone() {
@@ -319,6 +324,38 @@ public class RoomMap implements Serializable{
 					b.setDirty(true);
 			}
 		}
+	}
+	
+	public static RoomMap fromString(String map) {
+		String[] cleanedMap = map
+				.replace("map", "")
+				.replaceAll("[|,()]", "")
+				.split("\n");
+		
+		List<ArrayList<Box>> roomMap = new ArrayList<>(); 
+		
+        for (String line : cleanedMap) {
+            ArrayList<Box> l = new ArrayList<>();
+            
+            for (String ch : line.trim().split(" ")) {
+                //System.out.print(ch);
+                Box b = null;
+                if (ch.equals("r")) {
+                    b = new Box(false, false, true);
+                } else if  (ch.equals("X")) {
+                    b = new Box(true, false, false);
+                } else if (ch.equals("0")) {
+                    b = new Box(false, true, false);
+                } else if (ch.equals("1")) {
+                    b = new Box(false, false, false);
+                }
+                
+                l.add(b);
+            }
+            roomMap.add(l);
+        } 
+				
+		return new RoomMap(roomMap);
 	}
 	
 }
