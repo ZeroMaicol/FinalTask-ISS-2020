@@ -20,9 +20,8 @@ socket.on( 'message', function(v){
   if( v.indexOf("command")       >= 0 ){ setCommand(v) }
   if( v.indexOf("map")       >= 0 ){ createMap(v) }
   if( v.indexOf("pos")       >= 0 ){ addPositionAndDirection(v) }
-  //if( v.indexOf("obstacle")  >= 0 ){document.getElementById('infoDisplay').innerHTML=v; }
-  //if( v.indexOf("polar")     >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
-	
+  if( v.indexOf("wroom")       >= 0 ){ setWroomState(v) }
+  	
 });
 
 
@@ -35,6 +34,16 @@ socket.on( 'message', function(v){
 // |1, 1, 1, 1, 1, 1, 1,
 // |0,
 //  )) `), 500)
+
+function setWroomState(msg) {
+	var data = msg.match(/\(([^()]+)\)/g );
+	if (data.length >= 1) {
+		document.getElementById('wroomState').innerHTML= data[0];
+		if (data[0].indexOf("ALARM") >= 0) {
+			setTimeout(() => alert("Warning! Alarm triggered in the room."), 100)
+		}
+	}
+}
 
 function setBottles(elementId, msg) {
 	console.log(msg)
@@ -51,7 +60,7 @@ function setBottles(elementId, msg) {
 function setCommand(msg) {
 	var data = msg.match(/\(([^()]+)\)/g );
 	if (data.length >= 1) {
-		document.getElementById('currentState').innerHTML= data[0];
+		document.getElementById('detectorState').innerHTML= data[0];
 		if (data[0].indexOf("WAITING") >= 0) {
 			setTimeout(() => alert("Robot waiting for a user command"), 100)
 		}
@@ -246,7 +255,9 @@ that emits modelChange
 </div> -->
 <div style="background-color: #FAF19C">
 	<div style="font-size:150%">
- 		<strong>Current State</strong>: <span id="currentState"></span><br/>
+		<strong>Wroom State</strong>: <span id="wroomState"></span><br/>
+
+ 		<strong>Detector State</strong>: <span id="detectorState"></span><br/>
 		<br/>
 		<strong>Position</strong>: <span id="position"></span><br/>
 

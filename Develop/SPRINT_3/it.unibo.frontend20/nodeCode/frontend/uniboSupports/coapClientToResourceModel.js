@@ -10,6 +10,7 @@ var positionResourceAddr = coapAddr + "/wroom/detectorPosition"
 var mapResourceAddr = coapAddr + "/wroom/roomMap"
 var plasticBoxResourceAddr = coapAddr + "/wroom/plasticBox"
 var detectorBoxResourceAddr = coapAddr + "/wroom/detectorBox"
+var wroomResourceAddr = coapAddr + "/wroom"
 /*
 coap
     .tryToConnect( coapAddr )
@@ -50,6 +51,7 @@ exports.setcoapAddr = function ( addr ){
 	observe( mapResourceAddr );
 	observe( detectorBoxResourceAddr, "detectorBox")
 	observe( plasticBoxResourceAddr, "plasticBox")
+	observe( wroomResourceAddr, "wroom")
 }
 
 exports.updateData = function() {
@@ -58,6 +60,7 @@ exports.updateData = function() {
 	exports.coapGet(mapResourceAddr, (res) => handle.handeData(res))
 	exports.coapGet(detectorBoxResourceAddr, (res) => handle.handeData(res, "detectorBox"))
 	exports.coapGet(plasticBoxResourceAddr, (res) => handle.handeData(res, "plasticBox"))
+	exports.coapGet(wroomResourceAddr, (res) => handle.handeData(res, "wroom"))
 }
 
 exports.coapGet = function ( resourceAddr, handler ){

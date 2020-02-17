@@ -21,14 +21,14 @@ import itunibo.planner.model.RoomMap
 import itunibo.planner.model.Box
 
 object plannerUtil { 
-    private var initialState: RobotState? = null
+    private var initialState: RobotState? = RobotState(0, 0, RobotState.Direction.DOWN)
 	private var actions: List<Action>?    = null
 /*
  * ------------------------------------------------
  * PLANNING
  * ------------------------------------------------
  */
-    private var search: BreadthFirstSearch? = null
+    private var search: BreadthFirstSearch? = BreadthFirstSearch(GraphSearch())
     var goalTest: GoalTest = Functions()		//init
     private var timeStart: Long = 0
 
@@ -84,7 +84,6 @@ object plannerUtil {
             e.printStackTrace()
         }
     }
-	
 	
 	fun changeDirectionIfNextCellObstacle( x: Int, y: Int) {
 		val direction = initialState!!.direction
@@ -186,7 +185,7 @@ object plannerUtil {
 	}
 	
 	fun isRobotHome(): Boolean {
-		return initialState!!.x == 0 && initialState!!.y == 0
+		return initialState!!.x == 0 && initialState!!.y == 0 && initialState!!.direction == Direction.DOWN
 	}
 
 
@@ -197,8 +196,8 @@ object plannerUtil {
 * ------------------------------------------------
 */
 	
-    fun getPosX() : Int{ return initialState!!.x }
-    fun getPosY() : Int{ return initialState!!.y }
+    fun getPosX() : Int{ return initialState?.x ?: 0 }
+    fun getPosY() : Int{ return initialState?.y ?: 0 }
      
     fun doMove(move: String) {
         val dir = initialState!!.direction
@@ -319,19 +318,20 @@ object plannerUtil {
         goalTest = Functions()
     }
 
-	fun setGoal( x: String, y: String) {
-		setGoal( Integer.parseInt(x), Integer.parseInt(y))
+	fun setGoal( x: String, y: String, dir: String = "") {
+		setGoal( Integer.parseInt(x), Integer.parseInt(y), Direction.safeValueOf(dir))
 	}	
 
 	//Box(boolean isObstacle, boolean isDirty, boolean isRobot)
-    fun setGoal( x: Int, y: Int) {
+    fun setGoal( x: Int, y: Int, dir: Direction? = null) {
+		println("setGoal with direction = $dir")
         try {
-            println("setGoal $x,$y while robot in cell: ${getPosX()}, ${getPosY()} direction=${getDirection()}")	
+            println("setGoal $x,$y, dir=$dir while robot in cell: ${getPosX()}, ${getPosY()} direction=${getDirection()}")	
             RoomMap.getRoomMap().put(x, y, Box(false, true, false))
 			//initialState = RobotState(getPosX(), getPosY(), initialState!!.direction ) 
             goalTest = GoalTest { state  : Any ->
                 val robotState = state as RobotState
-				(robotState.x == x && robotState.y == y)
+				(robotState.x == x && robotState.y == y && (dir == null || robotState.direction == dir))
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -350,7 +350,7 @@ object plannerUtil {
 	
 	fun getDirection() : String{
 		//val direction = initialState!!.direction.toString()
-		val direction = initialState!!.direction 
+		val direction = initialState?.direction ?: Direction.DOWN 
 		when( direction ){
 			Direction.UP    -> return "upDir"
 			Direction.RIGHT -> return "rightDir"
@@ -417,5 +417,14 @@ object plannerUtil {
 			k++
 		 }
 		
+	}
+	
+	fun setDetectorHome() {
+		initialState = RobotState(0, 0, RobotState.Direction.DOWN)
+		RoomMap.getRoomMap().put(0, 0, Box(false, false, true))
+	}
+
+	fun resetMap() {
+		RoomMap.getRoomMap().reset()
 	}
 }

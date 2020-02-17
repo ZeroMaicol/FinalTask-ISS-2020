@@ -35,7 +35,7 @@ lateinit var host   : String
 	fun readWroomState(  ):WroomState{
 		setClientForPath( "wroom" )
 		val respGet : CoapResponse = client.get( )
-		val v = respGet.getResponseText()
+		val v = respGet.getResponseText().toLowerCase()
 		if (v == "alarm"){
 			return kotlincode.WroomState.ALARM
 		} else {

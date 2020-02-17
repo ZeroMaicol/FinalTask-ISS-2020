@@ -111,6 +111,16 @@ public class RobotState {
 	
 	public enum Direction {
 		UP, RIGHT, DOWN, LEFT;
+		
+		public static Direction safeValueOf(String value) {
+			switch (value) {
+			case "UP": return UP;
+			case "DOWN": return DOWN;
+			case "LEFT": return LEFT;
+			case "RIGHT": return RIGHT;
+			default: return null;
+			}
+		}
 	}
 
 }

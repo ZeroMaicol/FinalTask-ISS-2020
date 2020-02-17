@@ -54,7 +54,7 @@ CodedQActor detectorAdapter context ctxWroom
     
 QActor detector context ctxWroom{
 ["
-val StepDuration = 400L
+val StepDuration = 290L
 var IsBottle     = false
 var radius = 0
 var exploreX = 0
@@ -86,6 +86,8 @@ var beforeEmptyPos_y = -1
 		println("")
 		println("work::: CurrentMap is:")
 		["goToHome = false"]
+  		run itunibo.planner.plannerUtil.initAI()
+		run itunibo.planner.plannerUtil.resetMap()
 		run itunibo.planner.plannerUtil.showMap()
 	} 
 	Transition t0 
@@ -95,7 +97,6 @@ var beforeEmptyPos_y = -1
   	
   	State startExplore{
   		printCurrentMessage
-  		run itunibo.planner.plannerUtil.initAI()
   		//replyTo explore with exploreAck : exploreAck(OK)
 //  		forward basicrobot -m cmd : cmd(w)
 		["radius = 0"]
@@ -105,7 +106,7 @@ var beforeEmptyPos_y = -1
   	State exploreNextRadius {
   		println("")
   		println("------------")
-  		println("exploreNextRadius: $radius")
+  		println("exploreNextRadius: ${radius+1}")
 		["
 			radius = radius + 1
 			radiusFinished = false
@@ -183,7 +184,7 @@ var beforeEmptyPos_y = -1
 		whenMsg explore -> doPlannedMoves
 
 	State goHome {
-		run itunibo.planner.plannerUtil.setGoal("0", "0")
+		run itunibo.planner.plannerUtil.setGoal("0", "0", "DOWN")
 		run itunibo.planner.plannerUtil.doPlan()
 	} 
 	Goto executeHomeMove
@@ -196,8 +197,7 @@ var beforeEmptyPos_y = -1
 		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
 		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
 		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
-		["var Map = "] run itunibo.planner.plannerUtil.getMap()
-		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+		
  		
  		
  		if "(itunibo.planner.plannerUtil.isRobotHome())" {
@@ -206,6 +206,7 @@ var beforeEmptyPos_y = -1
  			} else {
  				forward detector -m backHome : backHome( OK )
  			}
+ 			run itunibo.planner.plannerUtil.setDetectorHome()
  			run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "home")
  		}
 		else {
@@ -226,6 +227,8 @@ var beforeEmptyPos_y = -1
 				forward detector -m moveOk : moveOk(OK)
 			}
 		}
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
  	}
 	Transition t1 
 		whenMsg backHome -> work

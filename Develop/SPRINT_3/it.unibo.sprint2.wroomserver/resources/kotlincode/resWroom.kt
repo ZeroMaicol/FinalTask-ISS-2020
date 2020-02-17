@@ -16,7 +16,7 @@ class resWroom( val owner: ActorBasic, name : String) : CoapResource( name ){
 	
 	var state = WroomState.IDLE
  	
- 	fun init(){
+ 	init {
 		setObservable(true)
 		println("resource $name  | created  " );		
 	}

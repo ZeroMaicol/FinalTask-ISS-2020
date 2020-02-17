@@ -25,6 +25,17 @@ public class RoomMap implements Serializable{
 	
 	private List<ArrayList<Box>> roomMap = new ArrayList<ArrayList<Box>>();
 	
+	public void reset() {
+		roomMap = new ArrayList<ArrayList<Box>>();
+		for (int i=0; i<1; i++) {
+			roomMap.add(new ArrayList<Box>());
+			for (int j=0; j<1; j++) {
+				roomMap.get(i).add(null);
+			}
+		}
+		this.put(0, 0, new Box(false, false, true));
+	}
+	
 	private RoomMap() {
 		super();
 		for (int i=0; i<1; i++) {
