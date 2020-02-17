@@ -180,6 +180,7 @@ var beforeEmptyPos_y = -1
 	Transition t0
 		whenMsg suspend -> goHome
 		whenMsg terminate -> terminateTask
+		whenMsg explore -> doPlannedMoves
 
 	State goHome {
 		run itunibo.planner.plannerUtil.setGoal("0", "0")
