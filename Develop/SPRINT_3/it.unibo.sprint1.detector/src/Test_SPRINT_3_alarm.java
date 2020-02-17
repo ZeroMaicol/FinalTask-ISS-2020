@@ -1,8 +1,5 @@
 
 import static org.junit.Assert.*;
-
-import java.util.HashMap;
-
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -13,16 +10,17 @@ import org.junit.Test;
 import alice.tuprolog.Term;
 import alice.tuprolog.Struct;
 
-public class Test_SPRINT_2_suspend {
+public class Test_SPRINT_3_alarm {
 
 	// coap
 	private String resDetectorPosition = "coap://localhost:5683/wroom/detectorPosition";
 	// paho
 	private String broker = "tcp://localhost";
 	private String detectorTopic = "unibo/qak/detector";
+	private String alarmTopic = "unibo/qak/alarmagent";
 	private String msgContentExplore = "msg(explore,dispatch,js,detector,explore(1),1)";
-	private String msgContentSuspend = "msg(suspend,dispatch,js,detector,explore(1),1)";
-    private String clientId = "sprint_1";
+	private String msgContentAlarm = "msg(alarm,dispatch,js,alarmagent,alarm(\"TVOC\"),1)";
+    private String clientId = "sprint_3";
     private MemoryPersistence persistence = new MemoryPersistence();
     private int qos = 2;
     //Test
@@ -57,9 +55,9 @@ public class Test_SPRINT_2_suspend {
     		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
     		//assertTrue("is the detector moving?", idle!="moving(idle)" );
     		
-            MqttMessage messageSuspend = new MqttMessage(msgContentSuspend.getBytes());
-            messageSuspend.setQos(qos);
-            publisherClient.publish(detectorTopic, messageSuspend);
+            MqttMessage messageAlarm = new MqttMessage(msgContentAlarm.getBytes());
+            messageAlarm.setQos(qos);
+            publisherClient.publish(alarmTopic, messageAlarm);
             publisherClient.disconnect();
             publisherClient.close();
 		} catch (MqttException | InterruptedException me) {

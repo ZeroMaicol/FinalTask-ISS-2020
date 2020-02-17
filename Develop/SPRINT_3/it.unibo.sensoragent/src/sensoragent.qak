@@ -18,24 +18,29 @@ QActor alarmagent context ctxAlarmAgent{
 		println("alarm agent START") 
 		run kotlincode.coapSupport.init("coap://localhost:5683")
 	}
+	Goto work
+	
+	State work{}
 	Transition t0 whenMsg alarm -> sendTheRightAlarm
 	
 	State sendTheRightAlarm{
 		onMsg( alarm : alarm(X)){	
 			["var Alarm = payloadArg(0)"]		
-			if "Alarm == \"TVOC-HIGH\""{
+			println("$Alarm")
+			if "Alarm == \"TVOC\""{
 				forward detector -m suspend:suspend($Alarm)
 				run kotlincode.coapSupport.setWroomAlarm()
 			}
 		}
 	}
+	Goto work
 }
 
 QActor perceiver context ctxAlarmAgent{
 	["
 		var TVOC = 0
-		var TVOC_threshold = 80
-		var TVOC_HIGH = \"TVOC-HIGH\"
+		var TVOC_threshold = 95
+		var TVOC_HIGH = \"TVOC\"
 	"]
 	State s0 initial{
 		println("perceiver START") 
@@ -47,13 +52,13 @@ QActor perceiver context ctxAlarmAgent{
 		//Get data
 		delay 2000
 		["TVOC = "] run adapter.sensorSupport.getSensorValue()   //Simulate the data
-		println("$TVOC")
 	}
 	Goto checkAndSendData
 	
 	State checkAndSendData{
 		//Check and Send
 		if "TVOC >= TVOC_threshold" {
+			println("$TVOC")
 			forward alarmagent -m alarm:alarm($TVOC_HIGH)
 		} else {
 			if "kotlincode.coapSupport.readWroomState() != kotlincode.WroomState.IDLE"{ 
