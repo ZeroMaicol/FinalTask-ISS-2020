@@ -5,8 +5,9 @@ const handle           = require('./qakeventHandler');
 const coap             = require("node-coap-client").CoapClient; 
 //var coapAddr           = "coap://192.168.1.8:5683"	//RESOURCE ON RASPBERRY PI
 var coapAddr             = "coap://localhost:5683"
-var coapResourceAddr   	 = coapAddr + "/wroom/robotCommand"
-var sensorResourceAddr   = coapAddr + "/robot/sonar"
+var robotCommandResourceAddr   	 = coapAddr + "/wroom/robotCommand"
+var positionResourceAddr = coapAddr + "/wroom/detectorPosition"
+var mapResourceAddr = coapAddr + "/wroom/roomMap"
 /*
 coap
     .tryToConnect( coapAddr )
@@ -42,21 +43,47 @@ exports.setcoapAddr = function ( addr ){
 	//coapResourceAddr   = coapAddr + "/robot/pos" // coap://localhost:5683/robot/pos
 	coapResourceAddr = addr
 	console.log("coap | coapResourceAddr=" + coapResourceAddr);
-	createCoapClient( coapResourceAddr   );
-	createCoapClient( sensorResourceAddr );
+	createCoapClient( robotCommandResourceAddr   );
+	createCoapClient( positionResourceAddr );
+	createCoapClient( mapResourceAddr );
+	observeACK()
 }
 
-exports.coapGet = function (  ){
+function observeACK() {
+	coap
+    .observe(
+        robotCommandResourceAddr /* string */,
+        "get" /* "get" | "post" | "put" | "delete" */,
+		handle.handleACK //handeData /* function */
+        //[payload /* Buffer */,]
+        //[options /* RequestOptions */]
+    )
+    .then(() => { console.log("		coapClientToResourceModel | observe setup " ); /* observing was successfully set up */})
+    .catch(err => { console.log("		coapClientToResourceModel | observe error " + err )  /* handle error */ })
+    ;
+}
+
+exports.updateData = function() {
+	console.log("updateData")
+	exports.coapGet(robotCommandResourceAddr, handle.handleACK)
+	
+	exports.coapGet(positionResourceAddr, handle.handeData)
+	
+	exports.coapGet(mapResourceAddr, handle.handeData)
+}
+
+exports.coapGet = function ( resourceAddr, handler ){
 	coap
 	    .request(
-	         coapResourceAddr,
+			resourceAddr,
 	        "get" /* "get" | "post" | "put" | "delete" */
  	        //[payload /* Buffer */,
 	        //[options /* RequestOptions */]]
 	    )
 	    .then(response => { 			/* handle response */
-	    	console.log("coap get done> " + response.payload );}
-	     )
+			console.log("coap get done> " + response.payload );
+			handler(response)
+		})
 	    .catch(err => { /* handle error */ 
 	    	console.log("coap get error> " + err );}
 	    )
@@ -64,13 +91,19 @@ exports.coapGet = function (  ){
 	    
 }//coapPut
 
-exports.coapPut = function (  cmd ){ 
-console.log("PUT " + coapResourceAddr);
+exports.coapPut = function (  cmd, path ){ 
+console.log("PUT " + coapResourceAddr + path);
+	
+	var resAddress = coapResourceAddr
+	if (path) {
+		resAddress += path
+	}
+
 	coap
 	    .request(
-	        coapResourceAddr,     
+			resAddress,     
 	        "put" ,			                          // "get" | "post" | "put" | "delete"   
-	        new Buffer(cmd )                          // payload Buffer 
+	        new Buffer(cmd)                          // payload Buffer 
  	        //[options]]							//  RequestOptions 
 	    )
 	    .then(response => { 			// handle response  
@@ -89,7 +122,7 @@ function test(){
  	//console.log("GET");
   	myself.coapGet();
  	//console.log("PUT");
- 	myself.coapPut("r")
+ 	// myself.coapPut("r")
  	myself.coapGet();
 }
 

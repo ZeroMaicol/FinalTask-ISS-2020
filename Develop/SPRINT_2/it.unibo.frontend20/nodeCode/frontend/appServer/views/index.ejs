@@ -14,19 +14,123 @@ socket.on('connect', function(){
 	console.log("socket connected");
 });
 socket.on( 'message', function(v){ 
-  console.log("RECEIVED " + v);
-  if( v.indexOf("distance")  >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
-  if( v.indexOf("pos")       >= 0 ){document.getElementById('robotDisplay').innerHTML=v; }
+//   console.log("RECEIVED " + v);
+  if( v.indexOf("ACK")       >= 0 ){ setACK(v) }
   if( v.indexOf("exploreAck")       >= 0 ){document.getElementById('exploreState').innerHTML=v; }
   if( v.indexOf("suspendAck")       >= 0 ){document.getElementById('suspendState').innerHTML=v; }
   if( v.indexOf("terminateAck")       >= 0 ){document.getElementById('terminateState').innerHTML=v; }
+  if( v.indexOf("map")       >= 0 ){ createMap(v) }
+  if( v.indexOf("pos")       >= 0 ){ addPositionAndDirection(v) }
   //if( v.indexOf("obstacle")  >= 0 ){document.getElementById('infoDisplay').innerHTML=v; }
   //if( v.indexOf("polar")     >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
-
+	
 });
 
+
+// setTimeout( () => createMap(`state(map(|1, 1, 1, 1, 1, r, 1, 
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |0,
+//  )) `), 500)
+
+function setACK(msg) {
+	document.getElementById('exploreState').innerHTML=""
+	document.getElementById('suspendState').innerHTML=""	
+	document.getElementById('terminateState').innerHTML=""
+
+	if (msg.indexOf("EXPLORE") >= 0) {
+		document.getElementById('exploreState').innerHTML="ACK"
+	}
+
+	if (msg.indexOf("SUSPEND") >= 0) {
+		document.getElementById('suspendState').innerHTML="ACK"
+		
+	}
+
+	if (msg.indexOf("TERMINATE") >= 0) {
+		document.getElementById('terminateState').innerHTML="ACK"
+	}
+}
+
+function addPositionAndDirection(msg) {
+	var data = msg.match(/\(([^()]+)\)/g );
+	if (data.length >= 1) {
+		document.getElementById('position').innerHTML= data[0];
+	}
+
+	if (data.length >= 2) {
+		document.getElementById('direction').innerHTML= data[1];
+	}
+}
+
+function createMap(msg) {
+	// console.log(msg)
+	var map = document.getElementById("mapArea")
+	// console.log(map)
+	var table = document.getElementById("mapTable")
+	if (table != null) {
+		map.removeChild(table) 
+	}
+
+	table = document.createElement("table")
+	table.setAttribute("id", "mapTable");
+	var tableBody = document.createElement('tbody');
+	var parsedMap = parseMap(msg)
+
+	parsedMap.forEach( (rowData) => {
+		var row = document.createElement('tr');
+
+		rowData.forEach(function(cellData) {
+      		var cell = document.createElement('td');
+      		cell.appendChild(document.createTextNode(cellData));
+      		row.appendChild(cell);
+    	});
+
+		tableBody.appendChild(row);
+	})
+
+	table.appendChild(tableBody);
+	map.appendChild(table)
+}
+
+function parseMap(msg) {
+	var map = []
+	var cleanedMap = msg.replace("state", "")
+		.replace("map", "")
+		.replace(/,/g, "")
+		.replace(/\|/g, "")
+		.replace(/\(/g, "")
+		.replace(/\)/g, "")
+		.trim()
+	var rows = cleanedMap.split("\n")
+    if (!rows || rows[0] === "") { return [["r"]] }
+    // console.log(rows)
+	for (var i = 0; i < rows.length; i++) {
+		var row = []
+		var cols = rows[i].trim().split(" ")
+		for (var j = 0; j < cols.length; j++) {
+			row.push(cols[j])
+		}
+		map.push(row)
+	}
+	return map
+}
+
 </script>
- 
+<style>
+table, th, td {
+  border: 1px solid black;
+}
+
+th, td {
+  padding: 15px;
+  text-align: left;
+}
+</style>
 </head>
 
 <body>
@@ -142,7 +246,15 @@ that emits modelChange
 	<div style="font-size:150%">
  		<strong>Explore STATE</strong>: <span id="exploreState"></span><br/>
 		<strong>Suspend STATE</strong>: <span id="suspendState"></span><br/>
-		<strong>Terminate STATE</strong>: <span id="terminateState"></span>
+		<strong>Terminate STATE</strong>: <span id="terminateState"></span><br/>
+		<br/><br/><br/>
+
+		<strong>Position</strong>: <span id="position"></span><br/>
+
+		<strong>Direction</strong>: <span id="direction"></span><br/>
+
+		<strong>Map</strong>:<br/>
+		<div id="mapArea"></div>
   	</div>
 </div>
 <center></center>
@@ -154,12 +266,12 @@ function handleForm(event, url) {
   xhr.open("POST", url, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.send();
+  console.log("xhr sent")
 }
 var form = document.getElementById("formExplore");
 form.addEventListener('submit', (event) => handleForm(event, "/explore"));
 form = document.getElementById("formSuspend");
 form.addEventListener('submit', (event) => handleForm(event, "/suspend"));
-form.addEventListener('submit', handleForm);
 form = document.getElementById("formTerminate");
 form.addEventListener('submit', (event) => handleForm(event, "/terminate"));
 

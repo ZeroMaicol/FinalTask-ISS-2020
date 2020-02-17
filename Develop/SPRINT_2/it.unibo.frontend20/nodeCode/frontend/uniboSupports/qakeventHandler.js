@@ -10,6 +10,12 @@ exports.setIoSocket = function ( iosock ) {	//called by
 
 exports.handeData = function ( response ){
 	var msgStr = "state("+response.payload+")";
-	//console.log("		qakeventHandler | handeData: " + msgStr);
+	// console.log("		qakeventHandler | handeData: " + msgStr);
+	io.sockets.send( msgStr );
+}
+
+exports.handleACK = function(response) {
+	var msgStr =  "ACK("+response.payload +")";
+	console.log("		qakeventHandler | handeData: " + msgStr);
 	io.sockets.send( msgStr );
 }

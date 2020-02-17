@@ -21,7 +21,7 @@ class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource(
 	}
 	override fun handleGET( exchange : CoapExchange ) {
 		//println("resource $name  | GET: ${exchange.getRequestText()} pos=$pos moving=$moving" )
-		exchange.respond( "pos$pos,dir($direction),moving$moving" )  // moving=$moving" , $pos dir($direction)
+		exchange.respond( "pos$pos,dir($direction),moving($moving)" )  // moving=$moving" , $pos dir($direction)
 	}
 	override fun handlePUT( exchange : CoapExchange) {
 		val msg = exchange.getRequestText()

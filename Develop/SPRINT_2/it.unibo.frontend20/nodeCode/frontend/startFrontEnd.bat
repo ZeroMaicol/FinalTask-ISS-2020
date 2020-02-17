@@ -4,4 +4,4 @@
 @rem
 @rem #########################################
 
-node frontendServer.js coap://localhost:5683/robot/pos
+node frontendServer.js coap://localhost:5683

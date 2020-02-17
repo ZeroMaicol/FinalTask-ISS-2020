@@ -50,6 +50,7 @@ app.get('/info', function (req, res) {
 
 app.get('/', function(req, res) {
 	res.render("index");
+	setTimeout(coap.updateData, 200)
 });	
 
 
@@ -83,13 +84,14 @@ app.post("/terminate", function(req, res,next) { handlePostCommand("terminate","
 
 function handlePostCommand( cmd, msg, req, res, next) {
   result = "applCode | Web server: done " + cmd
-  changeResourceModelCoap (cmd)
+  changeResourceModelCoap (cmd, "/wroom/robotCommand")
+  res.end()
   next()
 }
 
 function handlePostMove( cmd, msg, req, res, next ){
 	result = "applCode | Web server done: " + cmd
- 	delegate( cmd, msg, req, res);	
+	delegate( cmd, msg, req, res);
   	next();
 } 	
 //=================== UTILITIES =========================
@@ -99,7 +101,8 @@ var result = "";
 app.setIoSocket = function( iosock ){
  	io = iosock;
  	mqttUtils.setIoSocket(iosock); //DEC 2019
- 	qakevh.setIoSocket(iosock);	//DEC 2019
+	qakevh.setIoSocket(iosock);	//DEC 2019
+	coap.updateData()
 	console.log("applCode | SETIOSOCKET " );
 }
 
@@ -150,9 +153,9 @@ var publishTerminateRequestToDetector = function(cmd){
 	mqttUtils.publish( msgstr, "unibo/qak/detector" );
 }
 
-var changeResourceModelCoap = function( cmd ){  
+var changeResourceModelCoap = function( cmd, path ){  
     console.log("applCode | coap PUT> "+ cmd);
-	coap.coapPut(cmd);	//see coapClientToResourceModel
+	coap.coapPut(cmd, path);	//see coapClientToResourceModel
 }
 
 var publishEmitUserCmd = function( cmd ){  

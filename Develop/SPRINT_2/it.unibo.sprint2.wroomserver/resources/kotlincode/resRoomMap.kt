@@ -19,7 +19,7 @@ class resRoomMap( val owner: ActorBasic, name : String) : CoapResource( name ){
 		println("resource $name  | created  " );		
 	}
 	override fun handleGET( exchange : CoapExchange ) {
-		exchange.respond( "$roomMap ")  // moving=$moving" , $pos dir($direction)
+		exchange.respond( "map($roomMap)")  // moving=$moving" , $pos dir($direction)
 	}
 	override fun handlePUT( exchange : CoapExchange) {
 		val msg = exchange.getRequestText()
