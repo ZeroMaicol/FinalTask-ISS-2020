@@ -43,4 +43,9 @@ lateinit var host   : String
 		}
 	}
 	
+	fun updateResource( owner : ActorBasic, path: String, msg : String ){
+		setClientForPath( path )
+		val resp : CoapResponse = client.put(msg, MediaTypeRegistry.TEXT_PLAIN)
+	}
+	
 }

@@ -6,13 +6,17 @@ Dispatch alarm:alarm(X)
 Dispatch suspend:suspend(X)
 
 Context ctxAlarmAgent ip [ host= "localhost"     port= 8060 ] +mqtt  
-Context ctxWroom ip [ host= "127.0.0.1"     port= 8020 ]
+Context ctxWroom ip [ host= "127.0.0.1"     port= 8020 ] +mqtt
 
 ExternalQActor detector context ctxWroom 
 
-QActor alarmagent context ctxAlarmAgent{
+CodedQActor sensoradapter context ctxAlarmAgent
+		className "adapter.sensorAdapter"
+
+QActor alarmagent context ctxAlarmAgent{ 
 	State s0 initial{
 		println("alarm agent START") 
+		run kotlincode.coapSupport.init("coap://localhost:5683")
 	}
 	Transition t0 whenMsg alarm -> sendTheRightAlarm
 	
@@ -30,18 +34,20 @@ QActor alarmagent context ctxAlarmAgent{
 QActor perceiver context ctxAlarmAgent{
 	["
 		var TVOC = 0
-		var TVOC_threshold = 500
+		var TVOC_threshold = 80
 		var TVOC_HIGH = \"TVOC-HIGH\"
 	"]
 	State s0 initial{
 		println("perceiver START") 
+		run kotlincode.coapSupport.init("coap://localhost:5683")
 	}
 	Goto perceiveData
 	
 	State perceiveData{
 		//Get data
 		delay 2000
-		["TVOC = "] run sensors.airqualitysensor.getData()   //Simulate the data
+		["TVOC = "] run adapter.sensorSupport.getSensorValue()   //Simulate the data
+		println("$TVOC")
 	}
 	Goto checkAndSendData
 	

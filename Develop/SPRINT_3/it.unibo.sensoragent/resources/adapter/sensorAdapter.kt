@@ -14,7 +14,7 @@ class sensorAdapter( name : String ) : ActorBasic( name ){
 	 		if( sol2.isSuccess() ){
 				val TYPE =  sol2.getVarValue("TYPE").toString()
 				println("	--- sensorAdapter | FOR TYPE: $TYPE")
-				sensor.sensorSupport.create( TYPE )   
+				adapter.sensorSupport.create( TYPE )   
 			}
 		}		  		      
     }
