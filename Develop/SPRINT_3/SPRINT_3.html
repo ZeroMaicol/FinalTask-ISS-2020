@@ -214,13 +214,65 @@ For the requirements given, after the state tvoc-high is detected, the alarm man
 <td style="width:50%">
 <h4>Alarm Manager</h4>
 <pre>
-
+QActor alarmagent context ctxAlarmAgent{ 
+	State s0 initial{
+		println("alarm agent START") 
+		run kotlincode.coapSupport.init("coap://localhost:5683")
+	}
+	Goto work
+	
+	State work{}
+	Transition t0 whenMsg alarm -> sendTheRightAlarm
+	
+	State sendTheRightAlarm{
+		onMsg( alarm : alarm(X)){	
+			["var Alarm = payloadArg(0)"]		
+			println("$Alarm")
+			if "Alarm == \"TVOC\""{
+				forward detector -m suspend:suspend($Alarm)
+			}
+		}
+	}
+	Goto work
+}
 </pre>
 </td>
 <td>
 <h4>Perceiver</h4>
 <pre>
-
+QActor perceiver context ctxAlarmAgent{
+	["
+		var TVOC = 0
+		var TVOC_threshold = 95
+		var TVOC_HIGH = \"TVOC\"
+	"]
+	State s0 initial{
+		println("perceiver START") 
+		run kotlincode.coapSupport.init("coap://localhost:5683")
+	}
+	Goto perceiveData
+	
+	State perceiveData{
+		//Get data
+		delay 2000
+		["TVOC = "] run adapter.sensorSupport.getSensorValue()   //Simulate the data
+	}
+	Goto checkAndSendData
+	
+	State checkAndSendData{
+		//Check and Send
+		if "TVOC >= TVOC_threshold" {
+			println("$TVOC")
+			forward alarmagent -m alarm:alarm($TVOC_HIGH)
+			run kotlincode.coapSupport.setWroomAlarm()
+		} else {
+			if "kotlincode.coapSupport.readWroomState() != kotlincode.WroomState.IDLE"{ 
+				run kotlincode.coapSupport.setWroomIdle()	
+			}
+		}
+	}
+	Goto perceiveData
+}
 </pre>
 </td>
 </tr>
@@ -232,7 +284,29 @@ For the requirements given, after the state tvoc-high is detected, the alarm man
 <td style="width:50%">
 <h4>Wroom Resource</h4>
 <pre>
+class resWroom( val owner: ActorBasic, name : String) : CoapResource( name ){
+	
+	var state = WroomState.IDLE
+ 	
+ 	init {
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond("$state")
+	}
 
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"alarm" -> state = WroomState.ALARM
+			else -> state = WroomState.IDLE
+		}
+		changed()	// notify all CoAp observers
+		exchange.respond(CHANGED)
+	}
+}
 </pre>
 </td>
 <td>
@@ -253,14 +327,72 @@ This value will be also observed from the smartphone.
 <strong>TESTING</strong>: test the alarm situation.<br/>
 
 <h3>The Effort/Resources</h3>
-<strong>UPDATE THE SMART-PHONE</strong>: its a trivial matter. (30 minute)
-<strong>SENSOR AGENT</strong>: Estimated 1 man hour.
-<strong>TESTING</strong>: Estimated 1 man hour.
+<strong>UPDATE THE SMART-PHONE</strong>: its a trivial matter. (30 minute)<br/>
+<strong>SENSOR AGENT</strong>: Estimated 1 man hour.<br/>
+<strong>TESTING</strong>: Estimated 1 man hour.<br/>
 
 <h2>Test plans</h2> 
-<div class="remark">
-<ks>GOAL</ks>: give a formal description (for example, by using <ks>JUnit</ks>) of the <k>functional TestPlans</k>, with reference to the <k>logical architecture</k> of the system .
-</div>
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Alarm</h4>
+<pre>
+@Test
+	public void sprint_3_Test() {
+		
+		CoapClient detectorPosition = new CoapClient(resDetectorPosition);
+		
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContentExplore.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            
+            Thread.sleep(  // minutes to sleep
+		             10 *   // seconds to a minute
+		             1000); // milliseconds to a second
+            
+            
+            String v = "state("+detectorPosition.get().getResponseText()+")";
+            
+    		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		String idle = ( (Struct) Term.createTerm(v)).getArg(2).toString();
+    		System.out.println(v+" "+coordinates+" "+idle);
+    		
+    		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
+    		
+            MqttMessage messageAlarm = new MqttMessage(msgContentAlarm.getBytes());
+            messageAlarm.setQos(qos);
+            publisherClient.publish(alarmTopic, messageAlarm);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException | InterruptedException me) {
+            me.printStackTrace();
+		}
+		
+		try {
+			Thread.sleep(  // minutes to sleep
+			             20 *   // seconds to a minute
+			             1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		String v = "state("+detectorPosition.get().getResponseText()+")";
+        
+		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+		System.out.println("coord: "+coordinates);
+		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));
+	}
+</pre>
+</td>
+</tr>
+</tbody></table>
 
 <h2>Project</h2> 
 <h3>Sensor Adapter</h3> 
@@ -276,31 +408,56 @@ If the config contains sensor(real), the sensorSupport getData() will return the
 <td style="width:50%">
 <h4>Sensor Adapter</h4>
 <pre>
-
+class sensorAdapter( name : String ) : ActorBasic( name ){  
+    init{
+		println("	--- sensorAdapter | started")
+		val sol1 = pengine.solve( "consult('sensorConfig.pl')." )
+		if( ! sol1.isSuccess() ){
+			println("	--- sensorAdapter | ERROR in sensorConfig.pl")
+		}else{
+	 		val sol2 = pengine.solve( "sensor(TYPE)." )
+	 		if( sol2.isSuccess() ){
+				val TYPE =  sol2.getVarValue("TYPE").toString()
+				println("	--- sensorAdapter | FOR TYPE: $TYPE")
+				adapter.sensorSupport.create( TYPE )   
+			}
+		}		  		      
+    }
+ 
+    override suspend fun actorBody(msg : ApplMessage){
+        //println("	--- robotAdapterQaStream | received  msg= $msg "  ) //msg.msgContent()=cmd(X)
+		sysUtil.traceprintln(" $tt $name | received  $msg "  ) //msg.msgContent()=cmd(X)
+    }
+}
 </pre>
 </td>
 <td>
 <h4>Sensor Support</h4>
 <pre>
-
+object sensorSupport{
+	lateinit var sensorKind  :  String
+	
+	fun create( type:String ){
+		sensorKind = type
+		println( "		--- sensorSupport | CREATED for $sensorKind" )
+	}
+	
+	fun getSensorValue( ):Int{
+		//println("robotSupport move cmd=$cmd robotKind=$robotKind" )
+		when( sensorKind ){
+			"virtual"  -> { return sensors.airqualitysensor.getData() }	
+			"realmbot" -> { return 10 }
+			"realnano" -> { return 10 }
+			else       -> println( "		--- sensorSupport | sensor unknown" )
+		}
+		return 0
+	}
+}
 </pre>
 </td>
 </tr>
 </tbody></table>
-
-<h2>Testing</h2> 
-<div class="remark">
-<ks>GOAL</ks>: complete the <k>functional TestPlans</k> according to the project code and execute them.
-</div>
-
-<table style="width:100%" border="1">
-<tr>
-<td style="width:50%">
-</td>
-<td></td>
-</tr>
-</table>
-	      	
+    	
 <br/><br/> 	
 </div>  
 
