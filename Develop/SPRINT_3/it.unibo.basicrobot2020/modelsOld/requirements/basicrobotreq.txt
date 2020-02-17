@@ -1,0 +1,88 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak as the result of REQUIREMENT PHASE.
+ * 
+ * The model describes the logical architecture of the systems
+ * by 'formally' specifying the  STRUCTURE, INTERACTION, BEHAVIOR
+ * of its components
+* ================================================================
+ */
+System basicrobot
+
+Dispatch cmd  : cmd(X)
+Dispatch step : step(DURATION)
+Dispatch stop : stop(X)
+ 
+Context ctxRobot ip [ host= "localhost"   port= 8018 ]
+
+QActor robotreq context ctxRobot{ 
+	State s0 initial{
+		println("robotreq start")
+		run itunibo.robotVirtual.clientWenvObjTcp.initClientConn( myself )
+	}
+	Goto work
+	
+	State work{
+		println("robotreq waiting ...")
+	}
+	Transition s0 
+			whenMsg cmd  -> handleCmd
+			whenMsg step -> doStep
+			whenMsg stop -> doStop
+ /*
+  * REQUIREMENT req-cmd
+  */
+	State handleCmd {
+		printCurrentMessage
+		onMsg( cmd : cmd(X) ){
+			[" val MoveToDo = payloadArg(0) "]
+			//println("robot should execute the given command $MoveToDo")	
+			run itunibo.robotVirtual.clientWenvObjTcp.sendMsg(MoveToDo)
+	
+		}
+	}
+	Goto work
+
+ /*
+  * REQUIREMENT req-step
+  */
+  	State doStep {
+		printCurrentMessage
+		//TODO 
+	}
+	Goto work
+
+ /*
+  * REQUIREMENT req-stop
+  */
+  	State doStop {
+  		printCurrentMessage
+  		run itunibo.robotVirtual.clientWenvObjTcp.sendMsg("h")
+  	}
+	Goto work
+}
+
+/*
+ * This actor is not part of the system.
+ * It is introduced to make testing easier.
+ */
+
+QActor robotcallersimulator context ctxRobot{
+	State s0 initial{
+		println("robotCallerSimulator start")
+		forward robotreq -m cmd : cmd(w)
+ 		delay 1000
+		forward robotreq -m cmd : cmd(d)
+ 		delay 1000
+		forward robotreq -m cmd : cmd(d)
+ 		delay 1000
+ 		forward robotreq -m cmd : cmd(w)
+  		delay 1000
+ 		forward robotreq -m cmd : cmd(h)
+//		forward robot -m step : step(1000)
+	}
+}
+
+ 

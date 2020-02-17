@@ -1,0 +1,59 @@
+System alarmagent
+
+mqttBroker "localhost" : 1883  
+
+Dispatch alarm:alarm(X)
+Dispatch suspend:suspend(X)
+
+Context ctxAlarmAgent ip [ host= "localhost"     port= 8060 ] +mqtt  
+Context ctxWroom ip [ host= "127.0.0.1"     port= 8020 ]
+
+ExternalQActor detector context ctxWroom 
+
+QActor alarmagent context ctxAlarmAgent{
+	State s0 initial{
+		println("alarm agent START") 
+	}
+	Transition t0 whenMsg alarm -> sendTheRightAlarm
+	
+	State sendTheRightAlarm{
+		onMsg( alarm : alarm(X)){	
+			["var Alarm = payloadArg(0)"]		
+			if "Alarm == \"TVOC-HIGH\""{
+				forward detector -m suspend:suspend($Alarm)
+				run kotlincode.coapSupport.setWroomAlarm()
+			}
+		}
+	}
+}
+
+QActor perceiver context ctxAlarmAgent{
+	["
+		var TVOC = 0
+		var TVOC_threshold = 500
+		var TVOC_HIGH = \"TVOC-HIGH\"
+	"]
+	State s0 initial{
+		println("perceiver START") 
+	}
+	Goto perceiveData
+	
+	State perceiveData{
+		//Get data
+		delay 2000
+		["TVOC = "] run sensors.airqualitysensor.getData()   //Simulate the data
+	}
+	Goto checkAndSendData
+	
+	State checkAndSendData{
+		//Check and Send
+		if "TVOC >= TVOC_threshold" {
+			forward alarmagent -m alarm:alarm($TVOC_HIGH)
+		} else {
+			if "kotlincode.coapSupport.readWroomState() != kotlincode.WroomState.IDLE"{ 
+				run kotlincode.coapSupport.setWroomIdle()	
+			}
+		}
+	}
+	Goto perceiveData
+}

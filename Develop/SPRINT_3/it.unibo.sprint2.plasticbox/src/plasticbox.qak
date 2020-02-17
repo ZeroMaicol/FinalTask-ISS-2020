@@ -1,0 +1,65 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak.
+ * 
+ * ================================================================
+ */ 
+System plasticbox
+
+mqttBroker "localhost" : 1883  
+
+Dispatch collect  : collect(X)
+Dispatch empty : empty(X)
+
+Context ctxWroom ip [ host= "localhost"     port= 8030 ] +mqtt  
+
+CodedQActor plasticBoxAdapter context ctxWroom
+		className "plasticBox.plasticBoxAdapter"
+
+QActor plasticbox context ctxWroom{
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NPB:Int = 0
+"]
+	State s0 initial{
+		println("plasticBox started: initializing resource value...")
+		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+		["NPB = plasticBox.plasticBoxSupport.NPB"]
+		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=$NPB")
+		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+		["val Bottles = Result.get(1)
+		  val npb = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NPB=$npb") 
+	}
+	Goto work
+	
+	State work {}
+	Transition t0
+		whenMsg collect -> doCollect
+		whenMsg empty -> emptyTheBox
+	
+	State doCollect{
+		onMsg(collect : collect(X)) {
+			println("plasticBox collect bottles")
+			["var Bottles = payloadArg(0)"]
+			println("controllo l'input ricevuto")
+			println(Bottles)
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "$Bottles")
+		}
+	}
+	Goto work
+
+	State emptyTheBox {
+		onMsg(empty : empty(X)) {
+			println("plasticBox empty")
+			["var Bottles = payloadArg(0)"]
+			println("controllo l'input ricevuto")
+			println(Bottles)
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "0")
+		}
+	}
+	Goto work
+
+}

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ResourceAccess</title>
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script>
+function escapeRegExp(str) {
+    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
+var socket  = io.connect();
+socket.on('connect', function(){ 
+	console.log("socket connected");
+});
+socket.on( 'message', function(v){ 
+//   console.log("RECEIVED " + v);
+  if( v.indexOf("command")       >= 0 ){ setCommand(v) }
+  if( v.indexOf("map")       >= 0 ){ createMap(v) }
+  if( v.indexOf("pos")       >= 0 ){ addPositionAndDirection(v) }
+  //if( v.indexOf("obstacle")  >= 0 ){document.getElementById('infoDisplay').innerHTML=v; }
+  //if( v.indexOf("polar")     >= 0 ){document.getElementById('sonarRobotDisplay').innerHTML=v; }
+	
+});
+
+
+// setTimeout( () => createMap(`state(map(|1, 1, 1, 1, 1, r, 1, 
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |1, 1, 1, 1, 1, 1, 1,
+// |0,
+//  )) `), 500)
+
+function setCommand(msg) {
+	var data = msg.match(/\(([^()]+)\)/g );
+	if (data.length >= 1) {
+		document.getElementById('currentState').innerHTML= data[0];
+		if (data[0].indexOf("WAITING") >= 0) {
+			setTimeout(() => alert("Robot waiting for a user command"), 100)
+		}
+	}
+}
+
+function addPositionAndDirection(msg) {
+	var data = msg.match(/\(([^()]+)\)/g );
+	if (data.length >= 1) {
+		document.getElementById('position').innerHTML= data[0];
+	}
+
+	if (data.length >= 2) {
+		document.getElementById('direction').innerHTML= data[1];
+	}
+}
+
+function createMap(msg) {
+	// console.log(msg)
+	var map = document.getElementById("mapArea")
+	// console.log(map)
+	var table = document.getElementById("mapTable")
+	if (table != null) {
+		map.removeChild(table) 
+	}
+
+	table = document.createElement("table")
+	table.setAttribute("id", "mapTable");
+	var tableBody = document.createElement('tbody');
+	var parsedMap = parseMap(msg)
+
+	parsedMap.forEach( (rowData) => {
+		var row = document.createElement('tr');
+
+		rowData.forEach(function(cellData) {
+      		var cell = document.createElement('td');
+      		cell.appendChild(document.createTextNode(cellData));
+      		row.appendChild(cell);
+    	});
+
+		tableBody.appendChild(row);
+	})
+
+	table.appendChild(tableBody);
+	map.appendChild(table)
+}
+
+function parseMap(msg) {
+	var map = []
+	var cleanedMap = msg.replace("state", "")
+		.replace("map", "")
+		.replace(/,/g, "")
+		.replace(/\|/g, "")
+		.replace(/\(/g, "")
+		.replace(/\)/g, "")
+		.trim()
+	var rows = cleanedMap.split("\n")
+    if (!rows || rows[0] === "") { return [["r"]] }
+    // console.log(rows)
+	for (var i = 0; i < rows.length; i++) {
+		var row = []
+		var cols = rows[i].trim().split(" ")
+		for (var j = 0; j < cols.length; j++) {
+			row.push(cols[j])
+		}
+		map.push(row)
+	}
+	return map
+}
+
+</script>
+<style>
+#mapArea table, #mapArea th, #mapArea td {
+  border: 1px solid black;
+}
+
+#mapArea th, #mapArea td {
+  padding: 15px;
+  text-align: left;
+}
+</style>
+</head>
+
+<body>
+<!--
+===============================================================================
+Commands elaborated by frontend/uniboSupports/applCode
+that calls changeResourceModelCoap that exec a coap.put
+that emits modelChange
+===============================================================================
+--> 
+<div style="background-color: #D2B4DE">
+<h1 style="text-align:center;margin-bottom:50px;">Supervisor Console</h1>   
+
+<center>
+	<table>
+		<tr>
+			<td align="center">
+				<form id="formExplore" action="/explore" method="post">
+					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:5px" value="Explore" >
+				</form>	
+				<form id="formSuspend" action="/suspend" method="post">
+					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:5px" value="Suspend" >
+				</form>
+				<form id="formTerminate" action="/terminate" method="post">
+					<input type="submit" class="btn btn-primary btn-lg btn-block" style="font-size:30px;margin-bottom:30px" value="Terminate" >
+				</form>
+			</td>
+		</tr>
+	</table>
+</center>
+
+<!-- <center>
+			<table>
+					<tr>
+						<td></td>
+						<td align="center">
+							<form action="/q" method="post">
+									<input type="submit" style="font-size:30px;" value="Pick up" >
+							</form>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td align="center">
+							<form action="/w" method="post">
+							  	<input type="submit" style="font-size:30px;" value="forward" >
+							</form>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<td align="center">
+							<form action="/l" method="post">
+							  	<input type="submit" style="font-size:30px;"  value="left" >
+							</form>
+						</td>
+						<td align="center">						
+							<form action="/h" method="post">
+							    <font size="3" color="red">
+							  	<input type="submit" style="font-size:40px;"  value="  h  "  >
+							  	</font>
+							</form>
+						</td>
+						<td align="center">
+							<form action="/r" method="post">
+							  	<input type="submit" style="font-size:30px;" value="right"  >
+							</form>
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td align="center">
+							<form action="/s" method="post">
+							  	<input type="submit" style="font-size:30px;"  value="backward"  >
+							</form>
+						</td>
+						<td></td>
+					</tr>
+				</table>
+</center> -->
+ 
+
+<!-- <h2>Application console</h2>   
+<center>
+			<table >	
+					<tr>
+						<td align="center">
+							<form action="/0" method="post">
+							  	<input type="submit" style="font-size:30px;"  value="reset" >
+							</form>
+ 						</td>
+						<td align="center">
+							<form action="/p" method="post">
+							  	<input type="submit" style="font-size:30px;"  value="step" >
+							</form>
+ 						</td>
+						<td align="center">							
+							<form action="/k" method="post">							    
+							  	<input type="submit" style="font-size:30px; color:red;"  value="STOP"  >							  	 
+							</form>
+						</td>
+						<td align="center">
+							<form action="/b" method="post">
+							  	<input type="submit" style="font-size:30px;"  value="boundary">
+							</form>
+						</td>
+				</table>
+</center>
+
+</div> -->
+<div style="background-color: #FAF19C">
+	<div style="font-size:150%">
+ 		<strong>Current State</strong>: <span id="currentState"></span><br/>
+		<br/>
+		<strong>Position</strong>: <span id="position"></span><br/>
+
+		<strong>Direction</strong>: <span id="direction"></span><br/>
+
+		<strong>Map</strong>:<br/>
+		<div id="mapArea"></div>
+  	</div>
+</div>
+<center></center>
+
+<script>
+function handleForm(event, url) {
+  event.preventDefault();
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", url, true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.send();
+  console.log("xhr sent")
+}
+var form = document.getElementById("formExplore");
+form.addEventListener('submit', (event) => handleForm(event, "/explore"));
+form = document.getElementById("formSuspend");
+form.addEventListener('submit', (event) => handleForm(event, "/suspend"));
+form = document.getElementById("formTerminate");
+form.addEventListener('submit', (event) => handleForm(event, "/terminate"));
+
+</script>
+</body>
+</html>

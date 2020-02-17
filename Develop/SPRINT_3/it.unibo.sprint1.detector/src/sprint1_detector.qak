@@ -1,0 +1,548 @@
+/*
+ * ================================================================
+ * This file includes A TEXTUAL REPRESENTATION of A MODEL 
+ * of the required software system expressed using 
+ * the language (metamodel) qak.
+ * 
+ * ================================================================
+ */ 
+System wroom
+
+mqttBroker "localhost" : 1883  
+ 
+Dispatch cmd  : cmd(X)
+
+Dispatch updateBottle  : updateBottle(X)
+Dispatch emptyBottleResource : emptyBottleResource(X)
+
+//Request  explore   :  explore(X)
+//Reply    exploreAck  :  exploreAck(V)
+Dispatch explore : explore(X)
+Dispatch suspend : suspend(X)
+Dispatch terminate : terminate(X)
+
+
+Dispatch backHome: backHome(X)
+Dispatch detectorMustEmpty : detectorMustEmpty(X)
+Dispatch detectorCantEmpty : detectorCantEmpt(X)
+
+// Dispatch detectorCantEmpty : detectorCantEmpty(X)
+Dispatch suspend : suspend(X)
+Dispatch terminate : terminate(X)
+
+Dispatch collect: collect(X)
+Dispatch moveOk: moveOk(X)
+Dispatch obstacleFound : obstacleFound(X)
+Request  onestep   :  onestep(DURATION)	//internal
+Request onestepbackwards: onestepbackwards(DURATION)
+
+Reply    stepdone  :  stepdone(V)  
+Reply    stepfail  :  stepfail(DURATION, CAUSE)
+ 
+Event virtualobstacle  : virtualobstacle( OBJNAME )  //added DEC19 for remove
+
+
+Context ctxWroom ip [ host= "localhost"     port= 8020 ] +mqtt
+Context ctxBasicRobot ip [ host= "127.0.0.1"   port= 8018 ] //+mqtt
+Context ctxPlasticBox ip [ host= "::1" port= 8030] +mqtt
+
+ExternalQActor basicrobot context ctxBasicRobot 
+ExternalQActor plasticbox context ctxPlasticBox
+
+CodedQActor detectorAdapter context ctxWroom
+		className "detector.detectorAdapter"
+    
+QActor detector context ctxWroom{
+["
+val StepDuration = 400L
+var IsBottle     = false
+var radius = 0
+var exploreX = 0
+var exploreY = 0
+var radiusFinished = false
+var hasPlannedMoves = false
+var exploringHorizontal = true
+var CurrentCommand = \"\"
+var goToHome = false
+var unexploredPosition: Pair<Int,Int>? = null
+var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+var emptyTheDetectorBox = false
+var robotWasExploring = false;
+var beforeEmptyPos_x = -1
+var beforeEmptyPos_y = -1
+"]  	
+	State s0 initial{
+		println("detector starting...")
+		delay 2000
+ 		println("detector started!")
+ 		
+ 		run kotlincode.coapSupport.observeCommands(myself)
+	}
+	Goto work
+	
+	State work{
+		println("")
+		println("")
+		println("")
+		println("work::: CurrentMap is:")
+		["goToHome = false"]
+		run itunibo.planner.plannerUtil.showMap()
+	} 
+	Transition t0 
+		whenMsg explore -> startExplore
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+  	
+  	State startExplore{
+  		printCurrentMessage
+  		run itunibo.planner.plannerUtil.initAI()
+  		//replyTo explore with exploreAck : exploreAck(OK)
+//  		forward basicrobot -m cmd : cmd(w)
+		["radius = 0"]
+  	}
+  	Goto exploreNextRadius
+  	
+  	State exploreNextRadius {
+  		println("")
+  		println("------------")
+  		println("exploreNextRadius: $radius")
+		["
+			radius = radius + 1
+			radiusFinished = false
+			exploreY = radius
+			exploreX = 0
+			exploringHorizontal = true
+		"]
+	}
+//	Goto doExplore if "(radius < 5)" else work
+	Goto doExplore if "(!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)" else gotoUnexplored
+  	
+  	State gotoUnexplored {
+  		println("gotoUnexplored")
+  		["	radiusFinished = true
+			unexploredPosition = itunibo.planner.plannerUtil.getFirstNonExploredPosition()
+		"]
+  		if "unexploredPosition != null && goToHome" {
+  			run itunibo.planner.plannerUtil.setGoal("${unexploredPosition!!.first}","${unexploredPosition!!.second}")
+			run itunibo.planner.plannerUtil.doPlan()
+			
+  		} else {
+  			["goToHome = true"]
+  		}
+  	}
+  	Goto doPlannedMoves if "(unexploredPosition != null)" else executeEmptyTheDetectorBox
+
+	State executeEmptyTheDetectorBox {
+  		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+  		["val BottlesInDetector = Result.get(1)"]
+  		if "BottlesInDetector!!.compareTo(0) > 0" {
+			run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+			["val bottlesInPlasticBox = Result.get(1) !!
+			  val NPB = Result.get(2)
+			  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)"]
+			if "compareValues(NPB, totalBottles) >= 0" {
+				["emptyTheDetectorBox = true"]
+			} else {
+				["goToHome = false"]
+			}
+  		}
+	}
+	Goto goHome if "goToHome" else waitForCommand
+	
+	State terminateTask {
+		printCurrentMessage
+		onMsg( terminate : terminate( X )) {
+			["goToHome = true"]
+			run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+  			["val BottlesInDetector = Result.get(1)"]
+  			println("Terminate Task: $BottlesInDetector and result = $Result")
+			if "BottlesInDetector!!.compareTo(0) > 0" {
+				run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+				["val bottlesInPlasticBox = Result.get(1) !!
+			  	val NPB = Result.get(2)
+			  	val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)"]
+			  	println("npb = $NPB total=   $totalBottles")
+				if "compareValues(NPB, totalBottles) >= 0" {
+					["emptyTheDetectorBox = true"]
+					["robotWasExploring = false"]
+				}  else {
+					run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "waiting")
+				}
+  			}
+  			
+ 		}
+	}
+	Goto goHome
+
+	State waitForCommand {
+		run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "waiting")
+	}
+	Transition t0
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+
+	State goHome {
+		run itunibo.planner.plannerUtil.setGoal("0", "0")
+		run itunibo.planner.plannerUtil.doPlan()
+	} 
+	Goto executeHomeMove
+ 	 
+ 	State executeHomeMove {
+ 		printCurrentMessage
+ 		
+ 		//UPDATE RESOURCES
+ 		["	var PosX = "] run itunibo.planner.plannerUtil.getPosX()
+		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
+		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
+		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+ 		
+ 		
+ 		if "(itunibo.planner.plannerUtil.isRobotHome())" {
+ 			if "emptyTheDetectorBox" {
+ 				forward detector -m detectorMustEmpty : detectorMustEmpty( OK )
+ 			} else {
+ 				forward detector -m backHome : backHome( OK )
+ 			}
+ 			run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "home")
+ 		}
+		else {
+			// TODO if
+	 		delay 500
+			["var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()"]
+			run itunibo.planner.plannerUtil.doMove(CmdPayload)
+			if "CmdPayload == \"w\"" {
+				//TODO Step		
+				request steprobot -m onestep : onestep($StepDuration)
+			} 
+			if "CmdPayload == \"a\"" {
+				forward basicrobot -m cmd : cmd( l )	
+				forward detector -m moveOk : moveOk(OK)
+			} 
+			if "CmdPayload == \"d\"" {
+				forward basicrobot -m cmd : cmd( r )	
+				forward detector -m moveOk : moveOk(OK)
+			}
+		}
+ 	}
+	Transition t1 
+		whenMsg backHome -> work
+		whenMsg moveOk -> executeHomeMove
+		whenReply stepdone -> executeHomeMove
+//		whenReply stepfail -> goHome
+		whenMsg detectorMustEmpty -> executeBottlesTransfer
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+	
+	State executeBottlesTransfer {
+		println("executeEmptyDetectorBox")
+		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val BottlesInDetector = Result.get(1) !!"]
+		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+		["val bottlesInPlasticBox = Result.get(1) !!
+		  val NPB = Result.get(2)
+		  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)
+		"]
+		if "compareValues(NPB, totalBottles) >= 0" {
+			forward detectorbox -m emptyBottleResource : emptyBottleResource(0)
+			forward plasticbox -m collect : collect($BottlesInDetector)
+			["emptyTheDetectorBox = false"]
+			["goToHome = false"]
+			println("ROBOT EXPLORING?: $robotWasExploring")
+			if "robotWasExploring" {
+				["robotWasExploring = false"]
+				run itunibo.planner.plannerUtil.setGoal("$beforeEmptyPos_x","$beforeEmptyPos_y")
+				run itunibo.planner.plannerUtil.doPlan()
+				forward detector -m moveOk:moveOk(OK)
+			} else {
+				forward detector -m backHome:backHome(OK)
+				run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "home")
+			}
+		}
+	}
+	Transition t0
+		whenMsg moveOk -> doPlannedMoves
+		whenMsg backHome -> work
+	
+	State doExplore {
+		["if (exploreY < 0) { radiusFinished = true }"]
+		
+		
+		if "(!radiusFinished)" {
+			println("")
+			println("doExplore: currentMap:")
+			run itunibo.planner.plannerUtil.showMap()
+			
+			//UPDATE RESOURCE
+			["var Map = "] run itunibo.planner.plannerUtil.getMap()
+			run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+			
+			println("doExplore goal: ($exploreX,$exploreY)")
+			run itunibo.planner.plannerUtil.setGoal("$exploreX","$exploreY")
+			run itunibo.planner.plannerUtil.doPlan()
+			["
+				if (exploringHorizontal) {
+					if (exploreX < radius) { exploreX = exploreX + 1 }
+					else { 
+						exploringHorizontal = false 
+						exploreY = exploreY - 1
+					}
+				} else {
+					exploreY = exploreY - 1
+				}
+			"]
+		}
+	}
+	Goto doPlannedMoves if "(!radiusFinished && !itunibo.planner.plannerUtil.isFullyExplored())" else exploreNextRadius
+	
+	State doPlannedMoves {
+//		delay 500
+
+		//UPDATE RESOURCES
+		["	var PosX = "] run itunibo.planner.plannerUtil.getPosX()
+		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
+		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
+		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+		
+	} 
+	Goto doMove if "(itunibo.planner.plannerUtil.hasPlannedMoves())" else doExplore
+	
+	State doMove {
+		delay 500
+		["var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()"]
+		
+		println("-----")
+		println("doMove: move is $CmdPayload")
+		println("-----")
+		run itunibo.planner.plannerUtil.doMove(CmdPayload)
+		if "CmdPayload == \"w\"" {
+			//TODO Step		
+			request steprobot -m onestep : onestep($StepDuration)
+		} 
+		if "CmdPayload == \"a\"" {
+			forward basicrobot -m cmd : cmd( l )	
+			forward detector -m moveOk : moveOk(OK)
+		} 
+		if "CmdPayload == \"d\"" {
+			forward basicrobot -m cmd : cmd( r )	
+			forward detector -m moveOk : moveOk(OK)
+		}
+		
+	}
+	Transition t1 
+//		whenEvent virtualobstacle -> handleObstacle	
+		whenMsg moveOk -> doPlannedMoves
+		whenReply stepdone -> doPlannedMoves
+		whenReply stepfail -> onStepFail
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+
+	
+	State onStepFail {
+		onMsg( stepfail : stepfail( DURATION, CAUSE )) {		
+			["IsBottle = payloadArg(1).startsWith(\"bottle\")"]
+ 			if "IsBottle" {  //remove the bottle
+ 				["val StepTimeLeft = StepDuration - payloadArg(0).toLong()"]
+ 				forward basicrobot -m cmd : cmd( $payloadArg(1) )
+ 				delay 100  //give time to remove  the object payloadArg(1) TODO: request?
+ 				forward basicrobot -m cmd : cmd(h)
+ 				forward detectorbox -m updateBottle : updateBottle(1)
+	 			request steprobot -m onestep: onestep($StepTimeLeft)
+ 				println("onStepFail: bottle, step of duration $StepTimeLeft")
+ 				
+// 				println("Bottle removed!")
+    		} else{
+ 				forward basicrobot -m cmd : cmd(h)		
+				run itunibo.planner.plannerUtil.setRobotPositionAsObstacle()			
+	 			run itunibo.planner.plannerUtil.stepBack()
+	 			println("onStepFail: stepbackwards of duration ${payloadArg(0)}")
+	 			request steprobot -m onestepbackwards : onestepbackwards($payloadArg(0))	
+ 			}
+		}
+	}
+	Transition t1 whenReply stepdone -> afterStepFail
+  	
+  	
+	State afterStepFail {
+		if "IsBottle" {
+			run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+			["val BottlesInDetector = Result.get(1) !!
+			  val NDB = Result.get(2)"]
+			if "(compareValues(NDB, BottlesInDetector) == 0)" {
+				run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+				["val bottlesInPlasticBox = Result.get(1) !!
+				  val NPB = Result.get(2)
+				  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)
+				"]
+				if "compareValues(NPB, totalBottles) >= 0" {
+					["beforeEmptyPos_x = "] run itunibo.planner.plannerUtil.getPosX()
+					["beforeEmptyPos_y = "] run itunibo.planner.plannerUtil.getPosY()
+					["goToHome = true
+					  emptyTheDetectorBox = true
+					  robotWasExploring = true"]
+					forward detector -m detectorMustEmpty : detectorMustEmpty(OK)
+				} else {
+					run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "waiting")
+					forward detector -m detectorCantEmpty : detectorCantEmpty(detectorCantEmpty)
+				}
+			} else {
+				forward detector -m moveOk : moveOk(OK)
+			}
+		} else {
+			forward detector -m obstacleFound : obstacleFound(X)
+		}
+ 	}
+ 	Transition t1
+	 	whenMsg moveOk -> doPlannedMoves
+	 	whenMsg obstacleFound -> doExplore
+		whenMsg detectorMustEmpty -> goHome
+		whenMsg detectorCantEmpty -> waitForCommand
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+
+}
+
+QActor detectorbox context ctxWroom{
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NDB:Int = 0
+"]
+ 	State s0 initial{
+ 		println("detectorBox started: initializing resource value...")
+ 		run kotlincode.coapSupport.init("coap://localhost:5683")
+ 		["NDB = detector.detectorSupport.NDB"]
+ 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=$NDB")
+ 		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val Bottles = Result.get(1)
+		  val ndb = Result.get(2)"]
+		println("Resource correctly initialized: bottles=$Bottles, NDB=$ndb")
+ 	}
+	Goto work 
+	
+	State work{}
+	Transition t0
+		whenMsg updateBottle -> updateBottleResource
+		whenMsg emptyBottleResource -> emptyBottleResource
+	
+  	State updateBottleResource{
+		onMsg( updateBottle : updateBottle(X)){
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
+		}   
+	}
+  	Goto work 
+	
+	State emptyBottleResource {
+		onMsg(emptyBottleResource : emptyBottleResource(X)){
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "0")
+		}
+	}
+	Goto work
+	
+ }
+ 
+ 
+ QActor steprobot context ctxWroom {
+[" 
+var foundObstacle = false
+var StepTime      = 0L
+var StepBackwardsTime      = 0L
+var Duration      = 0 
+
+var TimeToEndStep = 0L  
+var IsBottle      = false
+"]  	
+	State s0 initial{
+ 		println("steprobot starts")	
+	}
+	Goto activateResource 
+	
+	State activateResource{  
+//	   run kotlincode.resServer.init(myself)
+//	   run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+// 	   run kotlincode.resourceObserver.init("coap://127.0.0.1:5683","robot/pos")
+		//run kotlincode.coapSupport.readResource(myself, "robot/pos") 
+		//run kotlincode.coapSupport.readResource(myself, "robot/sonar")
+// 		run consolegui.consoleGui.create()	//AFTER Resource creation
+	}
+	Goto work 
+	
+	State work{	} 
+	Transition s0 
+ 			whenMsg cmd        -> handleCmd
+ 			whenRequest onestep -> doStep
+			whenRequest onestepbackwards -> doStepBackwards
+ 
+  
+ /* 
+  * REQUIREMENT req-cmd: redirection
+  */
+	State handleCmd {
+		//printCurrentMessage 
+		onMsg( cmd : cmd(X) ){ 
+			["var Move = payloadArg(0)"]
+			forward basicrobot -m cmd : cmd( $Move )
+//			run kotlincode.coapSupport.updateResource(myself, "robot/pos", "u$Move")
+		}
+	} Goto work 
+
+ /*
+  * ---------------------------------------------------------------------------
+  * REQUIREMENT req-onestep 
+  * ---------------------------------------------------------------------------
+  */ 
+  
+	State doStep{ 
+ 		//printCurrentMessage  
+		onMsg( onestep : onestep( T ) ){
+			forward basicrobot -m cmd : cmd( w )  //ATTEMPT TO MOVE ...
+			["StepTime = payloadArg(0).toLong() 
+ 			  startTimer()"]	//REQUIREMENT req-onestep-time
+			println("steprobot | doStep StepTime =$StepTime ")
+		}  
+	}  
+	Transition t0 
+		whenTimeVar StepTime  -> stepDone	  
+ 	    whenEvent virtualobstacle -> stepFailVirtual 
+//		whenEvent obstacle    -> stepFail
+ 	
+ 	State doStepBackwards {
+ 		onMsg ( onestepbackwards: onestepbackwards(T) ) {
+ 			["StepBackwardsTime = payloadArg(0).toLong() - 30
+			  startTimer()"]
+			  println("steprobot | doStepBackwards StepBackwardsTime =$StepBackwardsTime")
+		  	forward basicrobot -m cmd : cmd ( s )
+ 		}
+ 	}  
+	Transition t0 
+		whenTimeVar StepBackwardsTime  -> stepBackwardsDone
+		
+	State stepBackwardsDone {
+		forward basicrobot -m cmd : cmd( h )
+		replyTo onestepbackwards with stepdone : stepdone(ok)
+	}
+	Goto work
+ 	
+	State stepDone{  //REQUIREMENT  req-onestep-info
+		forward basicrobot -m cmd : cmd( h ) 
+//		run kotlincode.coapSupport.updateResource(myself, "robot/pos", "up")
+ 		replyTo onestep with stepdone : stepdone(ok)
+  	}
+	Goto work
+
+	State stepFailVirtual{ //REQUIREMENT req-onestep-time, req-onestep-info
+		[" Duration=getDuration()
+		  TimeToEndStep = StepTime - Duration
+		"]
+		
+		forward basicrobot -m cmd : cmd( h )
+		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
+			replyTo onestep with stepfail : stepfail($Duration, $payloadArg(0))
+		} 
+   	}
+	Goto work 
+  
+}
+ 
