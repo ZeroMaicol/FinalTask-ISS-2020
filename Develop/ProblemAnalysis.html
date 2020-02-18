@@ -1,0 +1,1615 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+
+a:hover {
+    background-color: #cccccc;
+}
+
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+
+h1, h2, h3, h4 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+
+h2 {
+    background-color: #d9fbff;
+    font-size: 130%;
+}
+
+h3 {
+	background-color: #e6ccff;
+    font-size: 120%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 90%;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 15px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>FinalTask-ISS-2020</title></head>
+    
+<body>
+<div id="top">
+<h1>FinalTask-ISS-2020<font size="5"></font> </h1>
+</div>  
+
+<div class="body"> 
+
+<h2>Problem analysis</h2>
+
+<h3>Basicrobot (Bondi)</h3>
+<h4>The QAK model</h4>
+Since we have to design a heterogeneous distributed system, and since the technology to implement the robot is not defined in the requirements, it is necessary to follow a technology-independent approach.
+<br/>
+The software house already has a language developed ad hoc to solve the situation, the "qak" formalism, that is a meta-model represented in textual form used to expressing the structure, the interaction and the behavior of the software system. The meta-model "qak" defines in its conceptual space, the components of the software system as actors capable of exchanging messages of three types: dispatch, request, event.
+<h4>The basicrobot.qak</h4>
+The software house already has the code "basicrobot.qak" which already manages the situation to pilot a robot. The basicrobot actor receives the movement commands from the "detector" actor (that represents the robot's mind) and forwards them to the implementation of the robot that will execute them.
+<pre>
+	State work{ 
+		println("basicrobot waiting ... ")
+	}
+	Transition t0 
+			whenMsg cmd          -> handleCmd
+			whenEvent userCmd    -> handleUserCmd
+			whenEvent obstacle   -> handleObstacle
+</pre>
+To do this, the basicrobot actor needs to delegate the transmission to another qak actor called "robotadapter" (which is a CodedQActor coded entirely in kotlin) with the specific function of using the proper configuration to interface with the relative implementation of the robot, that can be virtual or physical.
+<pre>
+	State handleCmd {
+		onMsg( cmd : cmd(X) ){
+ 			forward robotadapter -m cmd : cmd( $payloadArg(0 ) )
+		}
+	}
+	Goto work
+</pre>
+The basicrobot also has the functionality of receiving "obstacle" events, following receipt of this event the robot enters a stop state and then switches to another state in which it moves away from the detected obstacle in order to be in a safety state.
+<pre>
+	State handleObstacle{
+		forward robotadapter -m cmd : cmd( h )
+		println("	basicrobot | stops (for safety) since  obstacle  ")
+ 	}
+ 	Goto movefarFromObstacle
+
+	State movefarFromObstacle{
+		println("	basicrobot | going back (to avoid event-generation) ")
+ 		forward robotadapter -m cmd : cmd( s )
+		delay 100
+		forward robotadapter -m cmd : cmd( h )
+	}
+	Goto work	
+</pre>
+<br/>
+
+
+
+<h3>Moving problematic (Detector) (Maicol)</h3>
+We can assume that the robot is moving in a flat euclidean space.<br/>
+The movement of the detector towards the bottle is already implemented in the set of basic commands provided by the basicrobot.<br/>
+In particular is defined by the command 'w' that the detector will delegate to the basicrobot.
+
+<h3>Communication problematic (Maicol, Christian)</h3>
+The meta-model QAK provides the possibility of 3 different communication models: 
+<ul>
+<li> <strong>Fire and Forget</strong>: Simple communication but the components of the system must know each other. </li>
+<li> <strong>Request-Response</strong>: Same as Fire and Forget but also worse because of the quantity of messages sent. </li>
+<li> <strong>Event</strong>: Components don't need to know eachother, but it's more complicated to develop because it needs an infrastructure that supports this type of communication.</li> 
+</ul>
+
+The given problematic implies that the model to use is the dispatch model.<br/>
+This is because an event would be received by anyone listening for it, and a response is not required.
+
+<h4> Application Message </h4>
+A class Application message is provided within the QAK model.<br/>
+This class defines a standard of communication, defining the template of the messages that are to be sent.<br/>
+
+<h4> MQTT </h4>
+The meta-model QAK gives the possibility of using a pattern mediator.<br/>
+This pattern allows communication between different parts of the system, without the need of knowing 
+the name of the components that you need to communicate with.<br/>
+In particular, what the meta-model provides, is the possibiliy of using an MQTT broker.
+
+<h3>The DetectorBox problematic (Detector) (Maicol)</h3>
+To adopt a divide and conquer strategy the DetectorBox is an entity separated from the detector.<br/>
+As a consequence the Detector Box is a QActor in the same context as the detector, that tracks the bottle that the detector has collected.
+
+<h3>The need of a CoAP resource (Detector) (Maicol)</h3>
+In the requirements it is requested to use a CoAP resource for the PlasticBox.<br/>
+CoAP is a RESTful interaction protocol lighter than HTTP, more suited for constrained devices.<br/>
+It is also important to develop meaningful test-plans for our system and CoAP provides us with an easy method to do so.<br/>
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<pre>
+object resServer{
+		fun init(owner: ActorBasic){
+			val server = CoapServer();
+			server.add( 
+				 resWroom(owner,  "wroom").add(	
+					 resDetectorBox(owner, "detectorBox"))
+			)
+			server.start();			
+		}
+}
+</pre>
+<pre>
+class resWroom( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	fun init(){
+		println("resource $name  | created  " );		
+	}
+}
+</pre>
+</td>
+<td>
+<pre>
+class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var bottles = 0
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$bottles" )
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetBottles() }
+ 			else -> updateBottles()
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun updateBottles(){
+		bottles = bottles+1
+	}
+	
+	fun resetBottles(){
+		bottles = 0
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3>Functional Architecture Detector and DetectorBox (Maicol)</h3>
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<pre>
+QActor detector context ctxWroom{
+[" 
+var IsBottle     = false
+"]  	
+	State s0 initial{
+		println("detector starting...")
+		delay 2000
+ 		println("detector started!")	
+	}
+	Goto work
+	
+	State work{} 
+	Transition t0 
+ 			whenMsg explore -> doExplore
+  	State doExplore{
+  		printCurrentMessage
+  		forward basicrobot -m cmd : cmd(w)
+  	}
+  	Transition t1
+  		whenEvent virtualobstacle -> checkObstacle
+	State checkObstacle{ //REQUIREMENT req-onestep-time, req-onestep-info
+		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
+			["  
+			  IsBottle = payloadArg(0).startsWith(\"bottle\")
+			"] 			
+ 			if "IsBottle" {  //remove the bottle
+ 				forward basicrobot -m cmd : cmd( $payloadArg(0) )
+ 				delay 100  //give time to remove  the object payloadArg(1) TODO: request?
+ 				forward basicrobot -m cmd : cmd(h)
+ 				forward detectorbox -m updateBottle : updateBottle(1)
+ 				println("Bottle removed!")
+    		} else{
+ 				forward basicrobot -m cmd : cmd(h)   		
+ 				println("Stop for safety, obstacle not bottle!")	
+ 			} 
+		}
+		["IsBottle = false"] 
+   	}
+	Goto work 
+}
+</pre>
+</td>
+<td>
+<pre>
+QActor detectorbox context ctxWroom{
+ 	State s0 initial{ println("detectorBox starts")}
+ 	Goto activateResource 
+	State activateResource{  
+	   run kotlincode.resServer.init(myself)
+	   run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+ 	   run kotlincode.resourceObserver.init("coap://127.0.0.1:5683","wroom/detectorBox")
+	}
+	Goto work 
+	State work{}
+	Transition t0
+		whenMsg updateBottle -> updateBottleResource
+  	State updateBottleResource{
+		onMsg( updateBottle : updateBottle(X)){			
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
+		}   
+	}
+  	Goto work
+ }
+</pre>
+</td>
+</tr>
+</tbody></table>
+<h3>A Web-frontend server (in Node) (Christian)</h3>
+<table><tbody>
+<tr>
+<td style="width:50%" >
+<img src="./img/smartrobotfrontendcoap.png" alt="smartrobotfrontendcoap.png" width="100%"  />
+<m>
+See the project  <ks>it.unibo.frontend20</ks>
+</m></td>
+<td>
+ <img src="./img/webpage.png" alt="webpage.png" width="40%"  /> <br/>
+<m>
+The Web-page uses a <ks>socket-io</ks> and is updated by a CoAP client observer written in Node
+that sends the received information on the <ks>socket-io</ks>.
+<br/><br/>
+It could be updated also by a mqtt support, but the usage of the CoAP resource will exclude the knowledge of
+any implementation detail (e.g. the topic <tt>unibo/qak/events</tt>).
+ </m>
+ </td>
+</tr>
+</tbody></table>
+
+<h3>The ProductBacklog</h3>
+<strong>DETECTOR</strong>: the robot mind that delegate to the basicrobot the behaviour to do to collect the bottle. <br/>
+<strong>BASIC ROBOT</strong>: extension with a new command to collect the bottle. <br/>
+<strong>VIRTUAL ROBOT</strong>: extension to permit to show a bottle and collect it. (This virtual space is used for testing)<br/>
+<strong>FRONTEND</strong>: Button to comunicate an explore message and a label to show the bottle inside the detectorBox.
+<strong>TESTING</strong>: Create a meaningful test.
+
+<h3>The Effort/Resources</h3>
+<h4>Detector and Detector Box development (Maicol)</h4>
+Thanks to the already developed and tested basicrobot and the features provided by the QAK model, the detector is just a component that implements the logic to be delegated to the basicrobot.<br/>
+A time of 1 hour is estimated.
+
+<h4>Front-end (Christian)</h4>
+Since it was already developed, we use a stripped down version of the front-end. <br/>1 man hour is estimated for the job.
+
+<h4>Testing (Bondi)</h4>
+Using CoAP helps the development of test plans by providing the developer with the needed knowledge regarding the system.<br/>
+A time of 1 hour is estimated.
+
+<h2>Test plans (Bondi)</h2> 
+The results to be achieved in this first sprint can be summarized through a single simple final test. This test involves the positioning of the robot and a plastic bottle inside a room. The robot must reach and collect the bottle just by moving forward with the assumption that there are no obstacles between the robot and the bottle.
+<pre>
+@Test
+public void sprint_1_Test() {
+	CoapClient readerClient = new CoapClient("coap://localhost:5683/wroom/detectorBox");
+	assertTrue("there's no bottle in detector box", readerClient.get().getResponseText().equals("0"));
+	
+	try {
+		MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+		MqttConnectOptions connOpts = new MqttConnectOptions();
+		connOpts.setCleanSession(true);
+		publisherClient.connect(connOpts);
+		assertTrue("client is connected?", publisherClient.isConnected());
+		MqttMessage message = new MqttMessage(msgContent.getBytes());
+		message.setQos(qos);
+		publisherClient.publish(detectorTopic, message); // send the forward command to robot
+		publisherClient.disconnect();
+		publisherClient.close();
+	} catch (MqttException me) {/* handle exception ... */}
+	
+	try {
+		Thread.sleep(5000); // wait for robot reach the bottle ...
+	} catch (InterruptedException e) {/* handle exception ... */}
+	assertTrue("detector has found and collect the bottle in 5 seconds?", readerClient.get().getResponseText().equals("1"));
+}
+</pre>
+<h3>The wroom problematics</h3>
+<h4>The planner</h4>
+The softwarehouse is already provided of a tool called planner.<br/>
+This tool is able to produce a map and to make plans on it.<br/>
+Every time the robot makes a move, the plan is calculated and the map is produced with every step.<br/>
+If the robot encounters an obstacle, the map must be updated with the obstacle position and the plan must be recalculated.
+
+
+<h4>The map</h4>
+The map produced its based on the robot measure: every robot step its a new cell on the map, this cell is filled with a 1,0 or X depending on the situation.<br/>
+If the robot has explored the cell the map shows a 1, otherwise a 0 if its not yet explored or an X if its an obstacle.<br/>
+This process of mapping could be automatized if the room and the objects in it are static, otherwise the process must be executed every time the detector explores the room.
+<h4>The room problematic final take</h4>
+Having at disposal this tool, it doesn't matter if the room has objects or not, or if they are moving or not, the map can be calculated every time the robot explores it.
+
+<h4>The movement problematic</h4>
+The robot can move forward, backward and can turn left or right by 90 degrees, morover the robot exploration always start with the robot in coordinates (0,0) facing south.
+<h4>The obstacle problematic</h4>
+The robot is able to move, as a consequence, a new problematic arise: the robot, when moving forward, should be able to stop in the presence of an obstacle.<br/>
+The stop should be forced below a certain threshold distance from the obstacle.<br/>
+This is already possible and already implemented inside the basicrobot.qak.<br/>
+When using a real robot a sensor is needed to notify the basicrobot of an obstacle.<br/>
+This was already discussed in the basicrobot development, refer to it for more informations.
+
+<h3>The plastic box problematic (Maicol)</h3>
+How is the plasticBox supposed to know how many bottles has collected at a given time?<br/>
+Considering that the content of the detectorBox is released inside the plasticBox, this problematic could be solved in different ways:<br/>
+<ul>
+	<li>The plasticBox is equipped with a sensor that allows to count the number of bottles that are being discharged, in this case the detector just check the resource to see if he can discharge.</li>
+	<li>The plasticBox interacts directly with the detector and its notified of the number of bottles that the detector is discharging.</li>
+	<li>The plasticBox and the detector interacts only via CoAP updating resources.</li>
+</ul>
+As an analyst, the choice that better solves our case, is that the detector, after checking that 
+the plasticBox can receive the content of the detectorBox, notifies the plasticBox of the bottles that it is discharging.<br/>
+This check is possible via the CoAP resources updated by the plasticBox and the detectorBox.<br/>
+This choice was taken because the company doesn't possess a sensor that allows to count bottles, and the client is cheap.
+
+<h3>Finding the plastic box problematic</h3>
+When the detector has to empty the detectorBox, it could happen that the plasticBox hasn't already been discovered.<br/>
+To prevent this kind of situation, it is assumed that the plasticBox is always situated in a known place of the room.<br/>
+In particular is situated at coordinates (0,0).
+
+<h3>Functional Architecture</h3>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The Detector (Christian/Bondi)</h4>
+<pre>
+QActor detector context ctxWroom{
+	State s0 initial{
+ 		run kotlincode.coapSupport.observeCommands(myself)
+	}
+	Goto work
+	
+	State work{
+		["goToHome = false"]
+		run itunibo.planner.plannerUtil.showMap()
+	} 
+	Transition t0 
+		whenMsg explore -> startExplore
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+  	
+  	State startExplore{
+  		printCurrentMessage
+  		run itunibo.planner.plannerUtil.initAI()
+		["radius = 0"]
+  	}
+  	Goto exploreNextRadius
+  	
+  	State exploreNextRadius {
+  		println("")
+  		println("------------")
+  		println("exploreNextRadius: $radius")
+		["
+			radius = radius + 1
+			radiusFinished = false
+			exploreY = radius
+			exploreX = 0
+			exploringHorizontal = true
+		"]
+	}
+	Goto doExplore if "(!itunibo.planner.plannerUtil.isFullyExplored() && !goToHome)" else gotoUnexplored
+  	
+  	State gotoUnexplored {
+  		println("gotoUnexplored")
+  		["	radiusFinished = true
+			unexploredPosition = itunibo.planner.plannerUtil.getFirstNonExploredPosition()
+		"]
+  		if "unexploredPosition != null && goToHome" {
+  			run itunibo.planner.plannerUtil.setGoal("${unexploredPosition!!.first}","${unexploredPosition!!.second}")
+			run itunibo.planner.plannerUtil.doPlan()
+			
+  		} else {
+  			["goToHome = true"]
+  		}
+  	}
+  	Goto doPlannedMoves if "(unexploredPosition != null)" else executeEmptyTheDetectorBox
+
+	State executeEmptyTheDetectorBox {
+  		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+  		["val BottlesInDetector = Result.get(1)"]
+  		if "BottlesInDetector!!.compareTo(0) > 0" {
+			run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+			["val bottlesInPlasticBox = Result.get(1) !!
+			  val NPB = Result.get(2)
+			  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)"]
+			if "compareValues(NPB, totalBottles) >= 0" {
+				["emptyTheDetectorBox = true"]
+			} else {
+				["goToHome = false"]
+			}
+  		}
+	}
+	Goto goHome if "goToHome" else waitForCommand
+	
+	State terminateTask {
+		printCurrentMessage
+		onMsg( terminate : terminate( X )) {
+			["goToHome = true"]
+			run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+  			["val BottlesInDetector = Result.get(1)"]
+  			println("Terminate Task: $BottlesInDetector and result = $Result")
+			if "BottlesInDetector!!.compareTo(0) > 0" {
+				run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+				["val bottlesInPlasticBox = Result.get(1) !!
+			  	val NPB = Result.get(2)
+			  	val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)"]
+			  	println("npb = $NPB total=   $totalBottles")
+				if "compareValues(NPB, totalBottles) >= 0" {
+					["emptyTheDetectorBox = true"]
+					["robotWasExploring = false"]
+				}  else {
+					run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "waiting")
+				}
+  			}
+  			
+ 		}
+	}
+	Goto goHome
+
+	State waitForCommand {
+		run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "waiting")
+	}
+	Transition t0
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+		whenMsg explore -> doPlannedMoves
+
+	State goHome {
+		run itunibo.planner.plannerUtil.setGoal("0", "0")
+		run itunibo.planner.plannerUtil.doPlan()
+	} 
+	Goto executeHomeMove
+ 	 
+ 	State executeHomeMove {
+ 		printCurrentMessage
+ 		["	var PosX = "] run itunibo.planner.plannerUtil.getPosX()
+		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
+		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
+		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+ 		
+ 		
+ 		if "(itunibo.planner.plannerUtil.isRobotHome())" {
+ 			if "emptyTheDetectorBox" {
+ 				forward detector -m detectorMustEmpty : detectorMustEmpty( OK )
+ 			} else {
+ 				forward detector -m backHome : backHome( OK )
+ 			}
+ 			run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "home")
+ 		}
+		else {
+	 		delay 500
+			["var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()"]
+			run itunibo.planner.plannerUtil.doMove(CmdPayload)
+			if "CmdPayload == \"w\"" {
+				//TODO Step		
+				request steprobot -m onestep : onestep($StepDuration)
+			} 
+			if "CmdPayload == \"a\"" {
+				forward basicrobot -m cmd : cmd( l )	
+				forward detector -m moveOk : moveOk(OK)
+			} 
+			if "CmdPayload == \"d\"" {
+				forward basicrobot -m cmd : cmd( r )	
+				forward detector -m moveOk : moveOk(OK)
+			}
+		}
+ 	}
+	Transition t1 
+		whenMsg backHome -> work
+		whenMsg moveOk -> executeHomeMove
+		whenReply stepdone -> executeHomeMove
+		whenMsg detectorMustEmpty -> executeBottlesTransfer
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+	
+	State executeBottlesTransfer {
+		println("executeEmptyDetectorBox")
+		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val BottlesInDetector = Result.get(1) !!"]
+		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+		["val bottlesInPlasticBox = Result.get(1) !!
+		  val NPB = Result.get(2)
+		  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)
+		"]
+		if "compareValues(NPB, totalBottles) >= 0" {
+			forward detectorbox -m emptyBottleResource : emptyBottleResource(0)
+			forward plasticbox -m collect : collect($BottlesInDetector)
+			["emptyTheDetectorBox = false"]
+			["goToHome = false"]
+			println("ROBOT EXPLORING?: $robotWasExploring")
+			if "robotWasExploring" {
+				["robotWasExploring = false"]
+				run itunibo.planner.plannerUtil.setGoal("$beforeEmptyPos_x","$beforeEmptyPos_y")
+				run itunibo.planner.plannerUtil.doPlan()
+				forward detector -m moveOk:moveOk(OK)
+			} else {
+				forward detector -m backHome:backHome(OK)
+				run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "home")
+			}
+		}
+	}
+	Transition t0
+		whenMsg moveOk -> doPlannedMoves
+		whenMsg backHome -> work
+	
+	State doExplore {
+		["if (exploreY < 0) { radiusFinished = true }"]
+		if "(!radiusFinished)" {
+			println("")
+			println("doExplore: currentMap:")
+			run itunibo.planner.plannerUtil.showMap()
+			
+			//UPDATE RESOURCE
+			["var Map = "] run itunibo.planner.plannerUtil.getMap()
+			run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+			
+			println("doExplore goal: ($exploreX,$exploreY)")
+			run itunibo.planner.plannerUtil.setGoal("$exploreX","$exploreY")
+			run itunibo.planner.plannerUtil.doPlan()
+			["
+				if (exploringHorizontal) {
+					if (exploreX < radius) { exploreX = exploreX + 1 }
+					else { 
+						exploringHorizontal = false 
+						exploreY = exploreY - 1
+					}
+				} else {
+					exploreY = exploreY - 1
+				}
+			"]
+		}
+	}
+	Goto doPlannedMoves if "(!radiusFinished && !itunibo.planner.plannerUtil.isFullyExplored())" else exploreNextRadius
+	
+	State doPlannedMoves {
+		//UPDATE RESOURCES
+		["	var PosX = "] run itunibo.planner.plannerUtil.getPosX()
+		["	var PosY = "] run itunibo.planner.plannerUtil.getPosY()
+		["	var Dir = "] run itunibo.planner.plannerUtil.getDirection()
+		run kotlincode.coapSupport.updateDetectorPosition("($PosX, $PosY)", "$Dir", "Moving")
+		["var Map = "] run itunibo.planner.plannerUtil.getMap()
+		run kotlincode.coapSupport.updateResource(myself, "wroom/roomMap", "$Map")
+		
+	} 
+	Goto doMove if "(itunibo.planner.plannerUtil.hasPlannedMoves())" else doExplore
+	
+	State doMove {
+		delay 500
+		["var CmdPayload = itunibo.planner.plannerUtil.getNextPlannedMove()"]
+		
+		println("-----")
+		println("doMove: move is $CmdPayload")
+		println("-----")
+		run itunibo.planner.plannerUtil.doMove(CmdPayload)
+		if "CmdPayload == \"w\"" {
+			//TODO Step		
+			request steprobot -m onestep : onestep($StepDuration)
+		} 
+		if "CmdPayload == \"a\"" {
+			forward basicrobot -m cmd : cmd( l )	
+			forward detector -m moveOk : moveOk(OK)
+		} 
+		if "CmdPayload == \"d\"" {
+			forward basicrobot -m cmd : cmd( r )	
+			forward detector -m moveOk : moveOk(OK)
+		}
+		
+	}
+	Transition t1 
+		whenMsg moveOk -> doPlannedMoves
+		whenReply stepdone -> doPlannedMoves
+		whenReply stepfail -> onStepFail
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+
+	
+	State onStepFail {
+		onMsg( stepfail : stepfail( DURATION, CAUSE )) {		
+			["IsBottle = payloadArg(1).startsWith(\"bottle\")"]
+ 			if "IsBottle" {  //remove the bottle
+ 				["val StepTimeLeft = StepDuration - payloadArg(0).toLong()"]
+ 				forward basicrobot -m cmd : cmd( $payloadArg(1) )
+ 				delay 100  //give time to remove  the object payloadArg(1) TODO: request?
+ 				forward basicrobot -m cmd : cmd(h)
+ 				forward detectorbox -m updateBottle : updateBottle(1)
+	 			request steprobot -m onestep: onestep($StepTimeLeft)
+ 				println("onStepFail: bottle, step of duration $StepTimeLeft")
+    		} else{
+ 				forward basicrobot -m cmd : cmd(h)		
+				run itunibo.planner.plannerUtil.setRobotPositionAsObstacle()			
+	 			run itunibo.planner.plannerUtil.stepBack()
+	 			println("onStepFail: stepbackwards of duration ${payloadArg(0)}")
+	 			request steprobot -m onestepbackwards : onestepbackwards($payloadArg(0))	
+ 			}
+		}
+	}
+	Transition t1 whenReply stepdone -> afterStepFail
+  	
+  	
+	State afterStepFail {
+		if "IsBottle" {
+			run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+			["val BottlesInDetector = Result.get(1) !!
+			  val NDB = Result.get(2)"]
+			if "(compareValues(NDB, BottlesInDetector) == 0)" {
+				run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+				["val bottlesInPlasticBox = Result.get(1) !!
+				  val NPB = Result.get(2)
+				  val totalBottles = bottlesInPlasticBox.plus(BottlesInDetector !!)
+				"]
+				if "compareValues(NPB, totalBottles) >= 0" {
+					["beforeEmptyPos_x = "] run itunibo.planner.plannerUtil.getPosX()
+					["beforeEmptyPos_y = "] run itunibo.planner.plannerUtil.getPosY()
+					["goToHome = true
+					  emptyTheDetectorBox = true
+					  robotWasExploring = true"]
+					forward detector -m detectorMustEmpty : detectorMustEmpty(OK)
+				} else {
+					run kotlincode.coapSupport.updateResource(myself, "wroom/robotCommand", "waiting")
+					forward detector -m detectorCantEmpty : detectorCantEmpty(detectorCantEmpty)
+				}
+			} else {
+				forward detector -m moveOk : moveOk(OK)
+			}
+		} else {
+			forward detector -m obstacleFound : obstacleFound(X)
+		}
+ 	}
+ 	Transition t1
+	 	whenMsg moveOk -> doPlannedMoves
+	 	whenMsg obstacleFound -> doExplore
+		whenMsg detectorMustEmpty -> goHome
+		whenMsg detectorCantEmpty -> waitForCommand
+		whenMsg suspend -> goHome
+		whenMsg terminate -> terminateTask
+
+}
+</pre>
+</td>
+<td>
+<h4>Steprobot (Christian)</h4>
+<pre>
+QActor steprobot context ctxWroom {
+	State s0 initial{
+ 		println("steprobot starts")	
+	}
+	Goto activateResource 
+	
+	State activateResource{  
+	}
+	Goto work 
+	
+	State work{	} 
+	Transition s0 
+ 			whenMsg cmd        -> handleCmd
+ 			whenRequest onestep -> doStep
+			whenRequest onestepbackwards -> doStepBackwards
+ 
+	State handleCmd {
+		onMsg( cmd : cmd(X) ){ 
+			["var Move = payloadArg(0)"]
+			forward basicrobot -m cmd : cmd( $Move )
+		}
+	} Goto work 
+  
+	State doStep{ 
+		onMsg( onestep : onestep( T ) ){
+			forward basicrobot -m cmd : cmd( w )  //ATTEMPT TO MOVE ...
+			["StepTime = payloadArg(0).toLong() 
+ 			  startTimer()"]	//REQUIREMENT req-onestep-time
+			println("steprobot | doStep StepTime =$StepTime ")
+		}  
+	}  
+	Transition t0 
+		whenTimeVar StepTime  -> stepDone	  
+ 	    whenEvent virtualobstacle -> stepFailVirtual 
+ 	
+ 	State doStepBackwards {
+ 		onMsg ( onestepbackwards: onestepbackwards(T) ) {
+ 			["StepBackwardsTime = payloadArg(0).toLong() - 30
+			  startTimer()"]
+			  println("steprobot | doStepBackwards StepBackwardsTime =$StepBackwardsTime")
+		  	forward basicrobot -m cmd : cmd ( s )
+ 		}
+ 	}  
+	Transition t0 
+		whenTimeVar StepBackwardsTime  -> stepBackwardsDone
+		
+	State stepBackwardsDone {
+		forward basicrobot -m cmd : cmd( h )
+		replyTo onestepbackwards with stepdone : stepdone(ok)
+	}
+	Goto work
+ 	
+	State stepDone{  //REQUIREMENT  req-onestep-info
+		forward basicrobot -m cmd : cmd( h ) 
+ 		replyTo onestep with stepdone : stepdone(ok)
+  	}
+	Goto work
+
+	State stepFailVirtual{ //REQUIREMENT req-onestep-time, req-onestep-info
+		[" Duration=getDuration()
+		  TimeToEndStep = StepTime - Duration
+		"]
+		
+		forward basicrobot -m cmd : cmd( h )
+		onMsg( virtualobstacle : virtualobstacle( OBJNAME )) {
+			replyTo onestep with stepfail : stepfail($Duration, $payloadArg(0))
+		} 
+   	}
+	Goto work 
+  
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The plasticBox (Maicol)</h4>
+<pre>
+QActor plasticbox context ctxWroom{
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NPB:Int = 0
+"]
+	State s0 initial{
+		run kotlincode.coapSupport.init("coap://localhost:5683")  //TO CHANGE!!!
+		["NPB = plasticBox.plasticBoxSupport.NPB"]
+		run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "NPB=$NPB")
+		run kotlincode.coapSupport.readPlasticBox("wroom/plasticBox", Result)
+		["val Bottles = Result.get(1)
+		  val npb = Result.get(2)"]
+	}
+	Goto work
+	
+	State work {}
+	Transition t0
+		whenMsg collect -> doCollect
+		whenMsg empty -> emptyTheBox
+	
+	State doCollect{
+		onMsg(collect : collect(X)) {
+			["var Bottles = payloadArg(0)"]
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "$Bottles")
+		}
+	}
+	Goto work
+
+	State emptyTheBox {
+		onMsg(empty : empty(X)) {
+			["var Bottles = payloadArg(0)"]
+			run kotlincode.coapSupport.updateResource(myself, "wroom/plasticBox", "0")
+		}
+	}
+	Goto work
+}
+</pre>
+</td>
+<td>
+<h4>The resource of the plasticBox (Maicol)</h4>
+<pre>
+class resPlasticBox( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var bottles = 0
+	var NPB = 0 
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$bottles,$NPB" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetBottles() }
+	 		else -> {
+				if (msg.contains("NPB")) {
+					val NPBValue = msg.substring(4)
+					setNPB(NPBValue)
+				} else {
+					updateBottles(msg)
+				}
+	 		} 
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun updateBottles(msg:String){
+		var value = msg.toIntOrNull()
+		if (value != null) {
+			bottles = bottles+value
+		}
+	}
+	fun resetBottles(){
+		bottles = 0
+	}
+	fun setNPB(NPBValue:String){
+		var value = NPBValue.toIntOrNull()
+		if (value != null){
+			NPB = value
+		}
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The detectorBox (Maicol)</h4>
+<pre>
+QActor detectorbox context ctxWroom{
+["
+	var Result:HashMap<Int,Int> = HashMap<Int,Int>()
+	var NDB:Int = 0
+"]
+ 	State s0 initial{
+ 		run kotlincode.coapSupport.init("coap://localhost:5683")
+ 		["NDB = detector.detectorSupport.NDB"]
+ 		run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "NDB=$NDB")
+ 		run kotlincode.coapSupport.readDetectorBox("wroom/detectorBox", Result)
+		["val Bottles = Result.get(1)
+		  val ndb = Result.get(2)"]
+ 	}
+	Goto work 
+	
+	State work{}
+	Transition t0
+		whenMsg updateBottle -> updateBottleResource
+		whenMsg emptyBottleResource -> emptyBottleResource
+	
+  	State updateBottleResource{
+		onMsg( updateBottle : updateBottle(X)){
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "1")
+		}   
+	}
+  	Goto work 
+	
+	State emptyBottleResource {
+		onMsg(emptyBottleResource : emptyBottleResource(X)){
+			run kotlincode.coapSupport.updateResource(myself, "wroom/detectorBox", "0")
+		}
+	}
+	Goto work
+ }
+</pre>
+</td>
+<td>
+<h4>The resource of the detectorBox (Maicol)</h4>
+<pre>
+class resDetectorBox( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var bottles = 0
+	var NDB = 0
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$bottles, $NDB" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetBottles() }
+	 		else -> {
+				if (msg.contains("NDB")) {
+					val NDBValue = msg.substring(4)
+					setNDB(NDBValue)
+				} else {
+					updateBottles()
+				}
+	 		} 
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun updateBottles(){
+		bottles = bottles+1
+	}
+	fun resetBottles(){
+		bottles = 0
+	}
+	fun setNDB(NDBValue:String){
+		var value = NDBValue.toIntOrNull()
+		if (value != null){
+			NDB = value
+		}
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>ResDetectorPosition (Maicol)</h4>
+<pre>
+class resDetectorPosition( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var pos        = "(0,0)"
+	var direction  = "SUD"
+	var moving     = "idle"
+	init{
+		setObservable(true)		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "pos$pos,dir($direction),moving$moving" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" -> resetDetector()
+ 			else -> {
+				var splitted = msg.split(".")
+				pos = splitted[0]
+				direction = splitted[1]
+				moving = splitted[2]
+			}
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun resetDetector(){
+		pos = "(0,0)"
+		direction = "SUD"
+		moving = "false"
+	}
+}
+</pre>
+</td>
+<td>
+<h4>ResRoomMap (Maicol)</h4>
+<pre>
+class resRoomMap( val owner: ActorBasic, name : String) : CoapResource( name ){
+ 	var roomMap:String = ""
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond( "$roomMap ")  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"0" ->  { resetMap() }
+	 		else -> {
+				roomMap = msg
+	 		} 
+		}
+		changed()	// notify all CoAp observers
+ 		exchange.respond(CHANGED)
+	}
+	fun resetMap(){
+		roomMap = ""
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+
+<h3>The ProductBacklog</h3>
+<strong>TASK EXPLORE THE ROOM</strong>: implement this task.<br/>
+<strong>TASK EMPTY THE DETECTORBOX</strong>: implement this task.<br/>
+<strong>PLASTICBOX</strong>: implement the plasticBox qactor.<br/>
+<strong>FRONTEND</strong>: add 2 new buttons for suspend and terminate.<br/>
+<strong>TASK GO TO HOME</strong>: implement this task.<br/>
+<strong>TASK TERMINATE THE WORK</strong>: implement this task.<br/>
+<strong>RESOURCES</strong>: implement the new resources. <br/>
+<strong>TESTPLANS</strong>: prepare functional test plans.<br/>
+
+<h3>The Effort/Resources</h3>
+<strong>PLASTICBOX</strong>: The implementations of the plasticBox requires a .QAK and a resource. (1 hour)<br/>
+<strong>FRONTEND</strong>: Add 2 buttons. (5 minute)<br/>
+<strong>RESOURCES</strong>: Estimated 1 man hour.<br/>
+<strong>DETECTOR WITH TASKS</strong>: Estimated 1 week because it comprehends the planner development.<br/>
+<strong>TESTPLANS</strong>: Estimated 3 man hour.
+
+<h2>Test plans</h2> 
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Explore</h4>
+<pre>
+@Test
+	public void sprint_2_Test() {
+		CoapClient detectorBoxClient = new CoapClient(detectorBoxRes);
+		CoapClient plasticBoxClient = new CoapClient(plasticBoxRes);
+		CoapClient roomMapClient = new CoapClient(roomMapRes);
+		
+		assertTrue("detectorbox is empty?", detectorBoxClient.get().getResponseText().substring(0, 1).equals("0"));
+		System.out.println("MAP:"+roomMapClient.get().getResponseText());
+		assertTrue("map is correctly initialized?", roomMapClient.get().getResponseText().equals(MAP_START));
+
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContent.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException me) {
+			System.out.println("reason "+me.getReasonCode());
+            System.out.println("msg "+me.getMessage());
+            System.out.println("loc "+me.getLocalizedMessage());
+            System.out.println("cause "+me.getCause());
+            System.out.println("excep "+me);
+            me.printStackTrace();
+		}
+
+		try {
+			Thread.sleep(2 *   // minutes to sleep
+		             60 *   // seconds to a minute
+		             1000); // milliseconds to a second
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		String map = roomMapClient.get().getResponseText();
+
+		assertTrue("is the map right?", RoomMap.fromString(map).isFullyExplored());
+		assertTrue("bottle emptied?", detectorBoxClient.get().getResponseText().substring(0, 1).equals("0"));
+		assertTrue("bottle collected?", plasticBoxClient.get().getResponseText().substring(0, 1).equals(BOTTLES));
+		
+	}
+</pre>
+</td>
+<td>
+<h4>Suspend</h4>
+<pre>
+@Test
+	public void sprint_2_Test() {
+		
+		CoapClient detectorPosition = new CoapClient(resDetectorPosition);
+		
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContentExplore.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            
+            Thread.sleep(  // minutes to sleep
+		             10 *   // seconds to a minute
+		             1000); // milliseconds to a second
+            
+            
+            String v = "state("+detectorPosition.get().getResponseText()+")";
+            
+    		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		String idle = ( (Struct) Term.createTerm(v)).getArg(2).toString();
+    		System.out.println(v+" "+coordinates+" "+idle);
+    		
+    		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
+    		
+            MqttMessage messageSuspend = new MqttMessage(msgContentSuspend.getBytes());
+            messageSuspend.setQos(qos);
+            publisherClient.publish(detectorTopic, messageSuspend);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException | InterruptedException me) {
+            me.printStackTrace();
+		}
+		
+		try {
+			Thread.sleep(  // minutes to sleep
+			             20 *   // seconds to a minute
+			             1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		String v = "state("+detectorPosition.get().getResponseText()+")";
+        
+		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+		System.out.println("coord: "+coordinates);
+		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));	
+	}
+</pre>
+</td>
+</tr>
+</tbody></table> 
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Terminate</h4>
+<pre>
+@Test
+	public void sprint_1_Test() {
+		
+		CoapClient detectorPosition = new CoapClient(resDetectorPosition);
+		CoapClient detectorBox = new CoapClient(resDetectorBox);
+		CoapClient plasticBox = new CoapClient(resPlasticBox);
+		
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContentExplore.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            
+            String boxContent =  detectorBox.get().getResponseText().substring(0, 1);
+            while (boxContent.equals("0")) {
+            	boxContent =  detectorBox.get().getResponseText().substring(0, 1);
+            	Thread.sleep(500);
+            }
+            Thread.sleep(100);
+            
+            System.out.println("box: "+detectorBox.get().getResponseText().substring(0, 1));
+            assertTrue("detectorbox is not empty?", !detectorBox.get().getResponseText().substring(0, 1).equals("0"));
+            assertTrue("plasticbox is empty?", plasticBox.get().getResponseText().substring(0, 1).equals("0"));
+            
+    		String v = "state("+detectorPosition.get().getResponseText()+")";
+            
+    		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		
+    		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
+    		
+            MqttMessage messageTerminate = new MqttMessage(msgContentTerminate.getBytes());
+            messageTerminate.setQos(qos);
+            publisherClient.publish(detectorTopic, messageTerminate);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException | InterruptedException me) {
+            me.printStackTrace();
+		}
+		
+		try {
+			Thread.sleep(  // minutes to sleep
+			             20 *   // seconds to a minute
+			             1000);
+			Thread.sleep(200);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		String v = "state("+detectorPosition.get().getResponseText()+")";
+        
+		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+		System.out.println("box: "+detectorBox.get().getResponseText().substring(0, 1));
+		
+		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));
+		assertTrue("is the detectorBox empty?", detectorBox.get().getResponseText().substring(0, 1).equals("0"));
+		assertTrue("is the plasticBox not empty?", !plasticBox.get().getResponseText().substring(0, 1).equals("0"));
+		
+	}
+</pre>
+</tr>
+</tbody></table> 
+<h3>Updating problematic (Christian)</h3>
+Updating the smart-phone of the supervisor is a trivial matter after the work made in the previous sprints.<br/>
+The front-end server will act as an observer of the resources that its interested of.<br/>
+
+<h3>The alarm system problematic (Maicol)</h3>
+The alarm system could be further developed in the future if more type of alarm were needed.<br/>
+With this thought in mind, the sensor-agent is suddivided in 2 agents: a perceiver and an alarm-manager.<br/>
+The perceiver will be responsible of getting the data from the sensors and checking them.<br/>
+If after checking them a situation of alarm is noticed, the perceiver must forward the relative alarm to the alarm-manager.<br/>
+The alarm-manager will then behave in accordance with the alarm.<br/>
+For the requirements given, after the state tvoc-high is detected, the alarm manager sends the suspend command to the detector.
+
+<h3>Functional Architecture</h3>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Alarm Manager (Maicol)</h4>
+<pre>
+QActor alarmagent context ctxAlarmAgent{ 
+	State s0 initial{
+		println("alarm agent START") 
+		run kotlincode.coapSupport.init("coap://localhost:5683")
+	}
+	Goto work
+	
+	State work{}
+	Transition t0 whenMsg alarm -> sendTheRightAlarm
+	
+	State sendTheRightAlarm{
+		onMsg( alarm : alarm(X)){	
+			["var Alarm = payloadArg(0)"]		
+			println("$Alarm")
+			if "Alarm == \"TVOC\""{
+				forward detector -m suspend:suspend($Alarm)
+			}
+		}
+	}
+	Goto work
+}
+</pre>
+</td>
+<td>
+<h4>Perceiver</h4>
+<pre>
+QActor perceiver context ctxAlarmAgent{
+	["
+		var TVOC = 0
+		var TVOC_threshold = 95
+		var TVOC_HIGH = \"TVOC\"
+	"]
+	State s0 initial{
+		println("perceiver START") 
+		run kotlincode.coapSupport.init("coap://localhost:5683")
+	}
+	Goto perceiveData
+	
+	State perceiveData{
+		//Get data
+		delay 2000
+		["TVOC = "] run adapter.sensorSupport.getSensorValue()   //Simulate the data
+	}
+	Goto checkAndSendData
+	
+	State checkAndSendData{
+		//Check and Send
+		if "TVOC >= TVOC_threshold" {
+			println("$TVOC")
+			forward alarmagent -m alarm:alarm($TVOC_HIGH)
+			run kotlincode.coapSupport.setWroomAlarm()
+		} else {
+			if "kotlincode.coapSupport.readWroomState() != kotlincode.WroomState.IDLE"{ 
+				run kotlincode.coapSupport.setWroomIdle()	
+			}
+		}
+	}
+	Goto perceiveData
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Wroom Resource (Maicol)</h4>
+<pre>
+class resWroom( val owner: ActorBasic, name : String) : CoapResource( name ){
+	
+	var state = WroomState.IDLE
+ 	
+ 	init {
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	
+	override fun handleGET( exchange : CoapExchange ) {
+		exchange.respond("$state")
+	}
+
+	override fun handlePUT( exchange : CoapExchange) {
+		val msg = exchange.getRequestText()
+		when( msg ){
+			"alarm" -> state = WroomState.ALARM
+			else -> state = WroomState.IDLE
+		}
+		changed()	// notify all CoAp observers
+		exchange.respond(CHANGED)
+	}
+}
+</pre>
+</td>
+<td>
+<m>
+The wroom resource is modified to hold the wroom state: IDLE, ALARM.<br/>
+This value will be also observed from the smartphone.
+</m>
+</td>
+</tr>
+</tbody></table>
+
+
+
+
+<h3>The ProductBacklog</h3>
+<strong>SENSOR AGENT</strong>: implement the agent that interacts with the sensor.<br/>
+<strong>UPDATE THE SMART-PHONE</strong>: show on the front-end server the informations that are required.<br/>
+<strong>TESTING</strong>: test the alarm situation.<br/>
+
+<h3>The Effort/Resources</h3>
+<strong>UPDATE THE SMART-PHONE</strong>: its a trivial matter. (30 minute)<br/>
+<strong>SENSOR AGENT</strong>: Estimated 1 man hour.<br/>
+<strong>TESTING</strong>: Estimated 1 man hour.<br/>
+
+<h2>Test plans</h2> 
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Alarm (Davide) </h4>
+<pre>
+@Test
+	public void sprint_3_Test() {
+		
+		CoapClient detectorPosition = new CoapClient(resDetectorPosition);
+		
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContentExplore.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            
+            Thread.sleep(  // minutes to sleep
+		             10 *   // seconds to a minute
+		             1000); // milliseconds to a second
+            
+            
+            String v = "state("+detectorPosition.get().getResponseText()+")";
+            
+    		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		String idle = ( (Struct) Term.createTerm(v)).getArg(2).toString();
+    		System.out.println(v+" "+coordinates+" "+idle);
+    		
+    		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
+    		
+            MqttMessage messageAlarm = new MqttMessage(msgContentAlarm.getBytes());
+            messageAlarm.setQos(qos);
+            publisherClient.publish(alarmTopic, messageAlarm);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException | InterruptedException me) {
+            me.printStackTrace();
+		}
+		
+		try {
+			Thread.sleep(  // minutes to sleep
+			             20 *   // seconds to a minute
+			             1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		String v = "state("+detectorPosition.get().getResponseText()+")";
+        
+		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+		System.out.println("coord: "+coordinates);
+		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));
+	}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Wait (Davide) </h4>
+<pre>
+@Test
+	public void sprint_1_Test() {
+		
+		CoapClient detectorPosition = new CoapClient(resDetectorPosition);
+		CoapClient detectorBox = new CoapClient(resDetectorBox);
+		CoapClient plasticBox = new CoapClient(resPlasticBox);
+		
+		plasticBox.put("2", MediaTypeRegistry.TEXT_PLAIN);
+		detectorBox.put("1", MediaTypeRegistry.TEXT_PLAIN);
+		detectorBox.put("1", MediaTypeRegistry.TEXT_PLAIN);
+		detectorBox.put("1", MediaTypeRegistry.TEXT_PLAIN);
+		
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContentExplore.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            
+            Thread.sleep(  // minutes to sleep
+		             40 *   // seconds to a minute
+		             1000);
+            Thread.sleep(200);
+            
+            System.out.println("box: "+detectorBox.get().getResponseText().substring(0, 1));
+            assertTrue("detectorbox is full?", detectorBox.get().getResponseText().substring(0, 1).equals("5"));
+            assertTrue("plasticbox is full?", plasticBox.get().getResponseText().substring(0, 1).equals("2"));
+            
+    		String v = "state("+detectorPosition.get().getResponseText()+")";
+    		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		String lastCoordinates = coordinates;
+    		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
+    		
+    		Thread.sleep(200);
+    		
+    		v = "state("+detectorPosition.get().getResponseText()+")";
+    		coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		assertTrue("is the detector still in the same position?", coordinates.equals(lastCoordinates));
+    		
+            MqttMessage messageSuspend = new MqttMessage(msgContentSuspend.getBytes());
+            messageSuspend.setQos(qos);
+            publisherClient.publish(detectorTopic, messageSuspend);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException | InterruptedException me) {
+            me.printStackTrace();
+		}
+		
+		try {
+			Thread.sleep(  // minutes to sleep
+			             20 *   // seconds to a minute
+			             1000);
+			Thread.sleep(200);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		
+		String v = "state("+detectorPosition.get().getResponseText()+")";
+        
+		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+		System.out.println("box: "+detectorBox.get().getResponseText().substring(0, 1));
+		
+		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));
+			
+	}
+</pre>
+</td>
+</tr>
+</tbody></table>
+</div>
+</body>
+</html>

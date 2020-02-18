@@ -1,0 +1,446 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+
+a:hover {
+    background-color: #cccccc;
+}
+
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+
+h1, h2, h3, h4 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+
+h2 {
+    background-color: #d9fbff;
+    font-size: 130%;
+}
+
+h3 {
+	background-color: #e6ccff;
+    font-size: 120%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 90%;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>FinalTask-ISS-2020</title></head>
+    
+<body>
+<div id="top">
+<h1>FinalTask-ISS-2020<font size="5"></font> </h1>
+</div>  
+
+<div class="body"> 
+
+<h2>Project</h2> 
+
+<h3>The wroom server</h3> 
+In the problem analysis the detectorBox starts a resource server where the CoAP resources are located.<br/>
+This choice is acceptable for the this particular case, but to generalize the resource problematic the resource server must be independent from the detector.<br/>
+This is because there could be more resource that are not related to the detector and the server must be available even if the detector is not on.<br/>
+As a consequence a new QActor is created called wroomserver.<br/>
+This QActor takes care of starting the resource server where all the resource are located.
+<table style="width:100%" border="1">
+<tbody><tr>
+<td style="width:50%">
+<h4>Analysis Solution</h4> 
+<pre>
+QActor detectorbox context ctxWroom{
+	...
+	State activateResource{  
+		...
+	   <k>run kotlincode.resServer.init(myself)</k> //No longer needed
+	}
+	...
+}
+</pre>
+</td>
+<td>
+<h4>Project Solution</h4> 
+<pre>
+QActor wroomserver context ctxWroom{	
+	State s0 initial{
+		println("STARTING SERVER AND RESOURCES")
+		<k>run kotlincode.resServer.init(myself)</k>
+	  	run kotlincode.coapSupport.init("coap://localhost:5683")
+	}
+	Goto work
+	State work {}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+<h3>Magic Numbers and the need of new adapters (Maicol)</h3>
+The detectorBox needs a constant value to be started: NDB.<br/>
+The plasticBox needs a constant value to be started: NPB.<br/>
+These values are related to the capacity of the bins that these actors represent.<br/>
+The problem is that if the bin is changed to another one, the main code must be modified to set the correct values.<br/>
+This is not an appropriate behaviour, as a consequence, a new adapter is created for each Box.<br/>
+The job of the adapters is to read a configuration file that contains all the info that are required to initialize the actors and create a support that store these informations.<br/>
+This change will also be relevant for future upgrades if more informations are needed to be configured.<br/><br/>
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The detectorAdapter (Maicol)</h4>
+<pre>
+class detectorAdapter( name : String ) : ActorBasic( name ){  
+    init{
+		println("	--- detectorAdapter | started")
+		val sol1 = pengine.solve( "consult('detectorConfig.pl')." )
+		if( ! sol1.isSuccess() ){
+			println("	--- detectorAdapter | ERROR in detectorConfig.pl")
+		}else{
+	 		val sol2 = pengine.solve( "detectorBox(NDB)." )
+	 		if( sol2.isSuccess() ){
+				val NDB =  sol2.getVarValue("NDB").toString()
+				println("	--- detectorAdapter | USING NDB: $NDB")
+				val NDB_Int = NDB.toInt()
+				detector.detectorSupport.create( NDB_Int )   
+			}
+		}		  		      
+    }
+    override suspend fun actorBody(msg : ApplMessage){
+        //println("	--- robotAdapterQaStream | received  msg= $msg "  ) //msg.msgContent()=cmd(X)
+		sysUtil.traceprintln(" $tt $name | received  $msg "  ) //msg.msgContent()=cmd(X)
+    }
+}
+</pre>
+</td>
+<td>
+<h4>The detectorSupport (Maicol)</h4>
+<pre>
+object detectorSupport{
+	var NDB  :  Int = 0
+	
+	fun create( ndb:Int ){
+		NDB = ndb
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table> 
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The plasticBoxAdapter (Maicol)</h4>
+<pre>
+class plasticBoxAdapter( name : String ) : ActorBasic( name ){  
+    init{
+		println("	--- plasticBoxAdapter | started")
+		val sol1 = pengine.solve( "consult('plasticBoxConfig.pl')." )
+		if( ! sol1.isSuccess() ){
+			println("	--- plasticBoxAdapter | ERROR in plasticBoxConfig.pl")
+		}else{
+	 		val sol2 = pengine.solve( "plasticBox(NPB)." )
+	 		if( sol2.isSuccess() ){
+				val NPB =  sol2.getVarValue("NPB").toString()
+				println("	--- plasticBoxAdapter | USING NPB: $NPB")
+				val NPB_Int = NPB.toInt()
+				plasticBox.plasticBoxSupport.create( NPB_Int )   
+			}
+		}		  		      
+    }
+ 
+    override suspend fun actorBody(msg : ApplMessage){
+        //println("	--- robotAdapterQaStream | received  msg= $msg "  ) //msg.msgContent()=cmd(X)
+		sysUtil.traceprintln(" $tt $name | received  $msg "  ) //msg.msgContent()=cmd(X)
+    }
+}
+</pre>
+</td>
+<td>
+<h4>The plasticBoxSupport (Maicol)</h4>
+<pre>
+object plasticBoxSupport{
+	var NPB  :  Int = 0
+	
+	fun create( npb:Int ){
+		NPB = npb
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table> 
+<h3>From MQTT to CoAP (Christian)</h3>
+To exclude any knowledge of the implementation detail to the front-end, the front-end will send the required command to the detector via CoAP resource instead of mqtt.
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>The Detector as a resource observer. (Christian)</h4>
+<pre>
+run kotlincode.coapSupport.observeCommands(myself)
+</pre>
+</td>
+<td>
+<h4>The resource observer (Christian)</h4>
+<pre>
+fun observeCommands(actor: ActorBasic) {
+		setClientForPath("wroom/robotCommand")
+		val relation = client.observe(ForwardCommandToActor(actor))
+}
+
+class ForwardCommandToActor(actor: ActorBasic): CoapHandler {
+	
+	var actor: ActorBasic
+	var previous: String? = null
+	init {
+		this.actor = actor
+	}
+	override fun onLoad(response: CoapResponse) {
+		val content = response.getResponseText()
+		if (content != previous){
+			println("NOTIFICATION $content, code: ${response.getCode().value}")
+			response.advanced().setCanceled(true)
+			if (content == "EXPLORE"){
+				actor.scope.launch { MsgUtil.sendMsg("explore", "explore($content)", actor) }
+			} else if (content == "SUSPEND") {
+				actor.scope.launch { MsgUtil.sendMsg("suspend", "suspend($content)", actor) }
+			} else if (content == "TERMINATE") {
+				actor.scope.launch { MsgUtil.sendMsg("terminate", "terminate($content)", actor) }
+			} 
+			previous = content
+		} else {
+			println("Same as before, no send")
+		}
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table> 
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Robot command resource. (Maicol)</h4>
+<pre>
+class resRobotCommand(name : String) : CoapResource( name ){
+	var state  = State.HOME
+	
+	init{
+		setObservable(true)
+		println("resource $name  | created  " );		
+	}
+	override fun handleGET( exchange : CoapExchange ) {
+		//println("resource $name  | GET: ${exchange.getRequestText()} pos=$pos moving=$moving" )
+		exchange.respond( "$state" )  // moving=$moving" , $pos dir($direction)
+	}
+	override fun handlePUT( exchange : CoapExchange) {
+		val prevState = state
+		val msg = exchange.getRequestText()
+		//println("resource $name  | PUT: $msg")
+		when( msg ){
+			"explore" 	->  { state = State.EXPLORE }
+			"suspend" 	-> 	{ state = State.SUSPEND }
+			"terminate" ->	{ state = State.TERMINATE }
+			"home"		->  { state = State.HOME }
+			"waiting" -> { state = State.WAITING}
+ 			//else -> println("")
+		}
+		changed()	// notify all CoAp observers
+
+		println("put: $msg")
+ 		exchange.respond(CHANGED)
+	}
+</pre>
+</td>
+</tr>
+</tbody></table>
+<h3>Sensor Adapter</h3> 
+As a consequence of our requirements, an air quality sensor is required.<br/>
+To make the testing on the virtual robot possible a simulation of this sensor is created.<br/>
+To avoid changing the code between the sensor simulation and the real sensor, an adapter is created.<br/>
+This adapter creates a sensorSupport in relation of a configuration file that defines the type of sensor to use.<br/>
+If the config contains sensor(virtual), the the sensorSupport getData() will return the simulated datas.<br/>
+If the config contains sensor(real), the sensorSupport getData() will return the data detected from the real sensor.<br/>
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Sensor Adapter</h4>
+<pre>
+class sensorAdapter( name : String ) : ActorBasic( name ){  
+    init{
+		println("	--- sensorAdapter | started")
+		val sol1 = pengine.solve( "consult('sensorConfig.pl')." )
+		if( ! sol1.isSuccess() ){
+			println("	--- sensorAdapter | ERROR in sensorConfig.pl")
+		}else{
+	 		val sol2 = pengine.solve( "sensor(TYPE)." )
+	 		if( sol2.isSuccess() ){
+				val TYPE =  sol2.getVarValue("TYPE").toString()
+				println("	--- sensorAdapter | FOR TYPE: $TYPE")
+				adapter.sensorSupport.create( TYPE )   
+			}
+		}		  		      
+    }
+ 
+    override suspend fun actorBody(msg : ApplMessage){
+        //println("	--- robotAdapterQaStream | received  msg= $msg "  ) //msg.msgContent()=cmd(X)
+		sysUtil.traceprintln(" $tt $name | received  $msg "  ) //msg.msgContent()=cmd(X)
+    }
+}
+</pre>
+</td>
+<td>
+<h4>Sensor Support</h4>
+<pre>
+object sensorSupport{
+	lateinit var sensorKind  :  String
+	
+	fun create( type:String ){
+		sensorKind = type
+		println( "		--- sensorSupport | CREATED for $sensorKind" )
+	}
+	
+	fun getSensorValue( ):Int{
+		//println("robotSupport move cmd=$cmd robotKind=$robotKind" )
+		when( sensorKind ){
+			"virtual"  -> { return sensors.airqualitysensor.getData() }	
+			"realmbot" -> { return 10 }
+			"realnano" -> { return 10 }
+			else       -> println( "		--- sensorSupport | sensor unknown" )
+		}
+		return 0
+	}
+}
+</pre>
+</td>
+</tr>
+</tbody></table>
+    	
+<br/><br/> 	
+</div>  
+</div>
+</body>
+</html>
