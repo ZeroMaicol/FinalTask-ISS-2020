@@ -192,6 +192,16 @@ After discussing with the client, the objective of this test plan is to  verify 
 <li>While the robot is exploring a state of alarm must be detected.</li>
 <li>At the end of the test the detector must have returned at the start after receiving a suspend message.</li>
 </ul>
+<h4>Wait</h4>
+After discussing with the client, the objective of this test plan is to verify that when the detectorBox is full and plasticBox is also full the robot must wait for a command.<br/>
+Moreover the robot can receive a suspend command and go back home.
+<br/>
+<ul>
+<li>At the start of the test the detector is situated in the top-left corner of the room.</li>
+<li>The robot explores until two bottles are collected and then stops. </li>
+<li>The robot stays in the wait state until a command is received.</li>
+<li>At the end of the test the detector must have returned at the start after receiving a suspend message.</li>
+</ul>
 
 <h2>Problem analysis</h2>
 <h3>Updating problematic (Christian)</h3>
@@ -212,7 +222,7 @@ For the requirements given, after the state tvoc-high is detected, the alarm man
 <tbody>
 <tr>
 <td style="width:50%">
-<h4>Alarm Manager</h4>
+<h4>Alarm Manager (Maicol)</h4>
 <pre>
 QActor alarmagent context ctxAlarmAgent{ 
 	State s0 initial{
@@ -282,7 +292,7 @@ QActor perceiver context ctxAlarmAgent{
 <tbody>
 <tr>
 <td style="width:50%">
-<h4>Wroom Resource</h4>
+<h4>Wroom Resource (Maicol)</h4>
 <pre>
 class resWroom( val owner: ActorBasic, name : String) : CoapResource( name ){
 	
@@ -336,7 +346,7 @@ This value will be also observed from the smartphone.
 <tbody>
 <tr>
 <td style="width:50%">
-<h4>Alarm</h4>
+<h4>Alarm (Davide) </h4>
 <pre>
 @Test
 	public void sprint_3_Test() {
@@ -388,6 +398,86 @@ This value will be also observed from the smartphone.
 		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
 		System.out.println("coord: "+coordinates);
 		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));
+	}
+</pre>
+</td>
+</tr>
+</tbody></table>
+
+<table style="width:50%" border="1">
+<tbody>
+<tr>
+<td style="width:50%">
+<h4>Wait (Davide) </h4>
+<pre>
+@Test
+	public void sprint_1_Test() {
+		
+		CoapClient detectorPosition = new CoapClient(resDetectorPosition);
+		CoapClient detectorBox = new CoapClient(resDetectorBox);
+		CoapClient plasticBox = new CoapClient(resPlasticBox);
+		
+		plasticBox.put("2", MediaTypeRegistry.TEXT_PLAIN);
+		detectorBox.put("1", MediaTypeRegistry.TEXT_PLAIN);
+		detectorBox.put("1", MediaTypeRegistry.TEXT_PLAIN);
+		detectorBox.put("1", MediaTypeRegistry.TEXT_PLAIN);
+		
+		try {
+			MqttClient publisherClient = new MqttClient(broker, clientId, persistence);
+			MqttConnectOptions connOpts = new MqttConnectOptions();
+            connOpts.setCleanSession(true);
+            publisherClient.connect(connOpts);
+            assertTrue("client is connected?", publisherClient.isConnected());
+            MqttMessage message = new MqttMessage(msgContentExplore.getBytes());
+            message.setQos(qos);
+            publisherClient.publish(detectorTopic, message);
+            
+            Thread.sleep(  // minutes to sleep
+		             40 *   // seconds to a minute
+		             1000);
+            Thread.sleep(200);
+            
+            System.out.println("box: "+detectorBox.get().getResponseText().substring(0, 1));
+            assertTrue("detectorbox is full?", detectorBox.get().getResponseText().substring(0, 1).equals("5"));
+            assertTrue("plasticbox is full?", plasticBox.get().getResponseText().substring(0, 1).equals("2"));
+            
+    		String v = "state("+detectorPosition.get().getResponseText()+")";
+    		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		String lastCoordinates = coordinates;
+    		assertTrue("is the detector exploring?", !coordinates.equals("pos(0,0)"));
+    		
+    		Thread.sleep(200);
+    		
+    		v = "state("+detectorPosition.get().getResponseText()+")";
+    		coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+    		assertTrue("is the detector still in the same position?", coordinates.equals(lastCoordinates));
+    		
+            MqttMessage messageSuspend = new MqttMessage(msgContentSuspend.getBytes());
+            messageSuspend.setQos(qos);
+            publisherClient.publish(detectorTopic, messageSuspend);
+            publisherClient.disconnect();
+            publisherClient.close();
+		} catch (MqttException | InterruptedException me) {
+            me.printStackTrace();
+		}
+		
+		try {
+			Thread.sleep(  // minutes to sleep
+			             20 *   // seconds to a minute
+			             1000);
+			Thread.sleep(200);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		
+		String v = "state("+detectorPosition.get().getResponseText()+")";
+        
+		String coordinates = ( (Struct) Term.createTerm(v)).getArg(0).toString();
+		System.out.println("box: "+detectorBox.get().getResponseText().substring(0, 1));
+		
+		assertTrue("is the detector back at home?", coordinates.equals("pos(0,0)"));
+			
 	}
 </pre>
 </td>
