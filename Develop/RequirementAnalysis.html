@@ -302,14 +302,42 @@ After a discussion with the client, to "Send in an automatic way" means that the
 After a discussion with the client, to be "automatically updated" means that the smart-phone used by the supervisor should be updated with the required information without the need of human interaction.
 
 <h3>Functional TestPlan</h3>
+<h4>Collect</h4>The detector, positioned in an empty room with no obstacle, is able to move towards a bottle positioned in front of it and collect it.<br/>
 <h4>Explore</h4>
 After discussing with the client, the objective of this test plan is to verify that the detector is able to explore the entirety of the room, as a consequence, the entire map of the room.<br/>
 <ul>
 <li>At the start of the test the detector is situated in the top-left corner of the room.</li>
 <li>At the end of the test the detector must have went through every cell of the map.</li>
 </ul>
-<h4>Altri...</h4>
-<h4>Altri...</h4>
+<h4>Suspend</h4>
+After discussing with the client, the objective of this test plan is to verify that the detector returns home after a suspend command.<br/>
+<ul>
+<li>At the start of the test the detector is situated in the top-left corner of the room.</li>
+<li>At the end of the test the detector must have returned at the start.</li>
+</ul>
+<h4>Terminate</h4>
+After discussing with the client, the objective of this test plan is to verify that the detector empties the detectorBox and returns home after a terminate command.<br/>
+<ul>
+<li>At the start of the test the detector is situated in the top-left corner of the room.</li>
+<li>At the end of the test the detector must have collected some bottles, emptied them in the plasticBox and returned at the start.</li>
+</ul>
+<h4>Alarm</h4>
+After discussing with the client, the objective of this test plan is to  verify that when a state of alarm is detected the robot is suspended and returns home.<br/>
+<ul>
+<li>At the start of the test the detector is situated in the top-left corner of the room.</li>
+<li>While the robot is exploring a state of alarm must be detected.</li>
+<li>At the end of the test the detector must have returned at the start after receiving a suspend message.</li>
+</ul>
+<h4>Wait</h4>
+After discussing with the client, the objective of this test plan is to verify that when the detectorBox is full and plasticBox is also full the robot must wait for a command.<br/>
+Moreover the robot can receive a suspend command and go back home.
+<br/>
+<ul>
+<li>At the start of the test the detector is situated in the top-left corner of the room.</li>
+<li>The robot explores until two bottles are collected and then stops. </li>
+<li>The robot stays in the wait state until a command is received.</li>
+<li>At the end of the test the detector must have returned at the start after receiving a suspend message.</li>
+</ul>
 
 </div>  
 <br/>
